@@ -26,14 +26,14 @@ public class DocumentController {
 
     @PostMapping("/register")
     public String register(
-        @RequestParam String projectName,
+        @RequestParam String name,
         @RequestParam String path,
         @RequestParam(
             required = false
         ) String description
     ) {
         service.create(
-            projectName,
+            name,
             path,
             description
         );

@@ -19,14 +19,20 @@ public class DocumentItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "project_name", nullable = false, length = 100)
-    private String projectName;
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;
 
     @Column(name = "path", nullable = false, length = 512)
     private String path;
 
     @Column(name = "description", length = 200)
     private String description;
+
+    @Column(name = "icon", nullable = true , length = 512)
+    private String icon;
+
+    @Column(name = "color", nullable = true , length = 6)
+    private String color;
 
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", nullable = false)

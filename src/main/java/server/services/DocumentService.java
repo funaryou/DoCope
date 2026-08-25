@@ -15,12 +15,12 @@ public class DocumentService {
     private final DocumentRepository repository;
 
     public DocumentItem create(
-        String projectName,
+        String name,
         String path,
         String description
     ) {
         DocumentItem document = new DocumentItem();
-        document.setProjectName(projectName);
+        document.setName(name);
         document.setPath(path);
         document.setDescription(description);
         return repository.save(document);
@@ -38,7 +38,7 @@ public class DocumentService {
 
     public DocumentItem updateDocumentItem(
         long id,
-        String projectName,
+        String name,
         String path,
         String description
     ) {
@@ -48,8 +48,8 @@ public class DocumentService {
                     "ドキュメントが見つかりません: " + id
                 )
             );
-        if (projectName != null){
-            document.setProjectName(projectName);
+        if (name != null){
+            document.setName(name);
         }
         if (path != null){
             document.setPath(path);
