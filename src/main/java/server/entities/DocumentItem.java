@@ -2,17 +2,16 @@ package server.entities;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "documents")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class DocumentItem {
 
     @Id
@@ -31,25 +30,25 @@ public class DocumentItem {
     @Column(name = "icon", nullable = true , length = 512)
     private String icon;
 
-    @Column(name = "color", nullable = true , length = 6)
+    @Column(name = "color", nullable = true , length = 7)
     private String color;
 
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Setter(AccessLevel.NONE)
     @Column(name = "updated_at", nullable = false)
-    private LocalDate updatedAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     public void onCreate() {
-        this.createdAt = LocalDate.now();
-        this.updatedAt = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void onUpdate() {
-        this.updatedAt = LocalDate.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }
