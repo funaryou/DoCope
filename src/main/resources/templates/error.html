@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>error</title>
+</head>
+<body>
+    <h1 th:text="${errorCode}">404</h1>
+    <p th:text="${errorMessage}">エラーが発生しました</p>
+    <a href="/">一覧へ戻る</a>
+</body>
+</html>
