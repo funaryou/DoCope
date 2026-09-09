@@ -1,69 +1,118 @@
 package server.services;
 
-import server.entities.DocumentItem;
-import server.repositories.DocumentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import server.dto.DocumentCreateForm;
+import server.dto.DocumentResponse;
+import server.dto.DocumentUpdateForm;
+import server.entities.DocumentItem;
+import server.exceptions.DocumentNotFoundException;
+import server.repositories.DocumentRepository;
+import server.validation.IconValidator;
+
+import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
-
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DocumentService {
     private final DocumentRepository repository;
+    private final IconService iconService;
+    private final IconValidator iconValidator;
 
-    public DocumentItem create(
-        String name,
-        String path,
-        String description
-    ) {
-        DocumentItem document = new DocumentItem();
-        document.setName(name);
-        document.setPath(path);
-        document.setDescription(description);
-        return repository.save(document);
+    @Transactional
+    public DocumentResponse create(
+        DocumentCreateForm form,
+        MultipartFile iconFile
+    ) throws IOException {
+        String iconPath = null;
+        if (iconFile != null && !iconFile.isEmpty()) {
+            iconValidator.validate(iconFile);
+            iconPath = iconService.save(iconFile);
+        }
+        try {
+            DocumentItem item = new DocumentItem();
+            item.setName(form.getName());
+            item.setPath(form.getPath());
+            item.setDescription(form.getDescription());
+            item.setIcon(iconPath);
+            item.setColor(form.getColor());
+            return DocumentResponse.from(repository.save(item));
+        } catch (RuntimeException e) {
+            iconService.deleteIfExists(iconPath);
+            throw e;
+        }
     }
 
-    public Optional<DocumentItem> findById(
+    @Transactional(readOnly = true)
+    public List<DocumentResponse> findAll() {
+        return repository
+            .findAll()
+            .stream()
+            .map(DocumentResponse::from)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DocumentResponse findById(
         Long id
     ) {
-        return repository.findById(id);
+        DocumentItem item = repository
+            .findById(id)
+            .orElseThrow(() -> new DocumentNotFoundException(id));
+        return DocumentResponse.from(item);
     }
 
-    public List<DocumentItem> findAll(){
-        return repository.findAll();
+    @Transactional
+    public DocumentResponse update(
+        Long id,
+        DocumentUpdateForm form,
+        MultipartFile iconFile
+    ) throws IOException {
+        DocumentItem item = repository
+            .findById(id)
+            .orElseThrow(() -> new DocumentNotFoundException(id));
+        
+        if (form.getName() != null) item.setName(form.getName());
+        if (form.getPath() != null) item.setPath(form.getPath());
+        if (form.getDescription() != null) item.setDescription(form.getDescription());
+        if (form.getColor() != null) item.setColor(form.getColor());
+
+        if (iconFile != null && !iconFile.isEmpty()) {
+            iconValidator.validate(iconFile);
+            String newPath = iconService.save(iconFile);
+            String oldPath = item.getIcon();
+            try {
+                item.setIcon(newPath);
+                DocumentResponse res = DocumentResponse.from(repository.save(item));
+                iconService.deleteIfExists(oldPath);
+                return res;
+            } catch (RuntimeException e) {
+                iconService.deleteIfExists(newPath);
+                throw e;
+            }
+        }
+        return DocumentResponse.from(repository.save(item));
     }
 
-    public DocumentItem updateDocumentItem(
-        long id,
-        String name,
-        String path,
-        String description
-    ) {
-        DocumentItem document = repository.findById(id)
-            .orElseThrow(() 
-                -> new RuntimeException(
-                    "ドキュメントが見つかりません: " + id
-                )
-            );
-        if (name != null){
-            document.setName(name);
-        }
-        if (path != null){
-            document.setPath(path);
-        }
-        if (description != null){
-            document.setDescription(description);
-        }
-        return repository.save(document);
-    }
-
+    @Transactional 
     public void delete(
         Long id
         ) {
-        repository.deleteById(id);
+        DocumentItem item = repository
+            .findById(id)
+            .orElseThrow(() -> new DocumentNotFoundException(id));
+        
+        repository.delete(item);
+            
+        if (item.getIcon() != null && !item.getIcon().isBlank()) {
+            iconService.deleteIfExists(item.getIcon());
+        }
     }
-
 }
