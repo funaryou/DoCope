@@ -1,4 +1,4 @@
-package server.infrastructure.fs;
+package server.validation;
 
 import java.nio.file.Path;
 
