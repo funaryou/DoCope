@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import server.infrastructure.fs.TreeNode;
@@ -13,13 +12,12 @@ import server.services.TreeService;
 import java.io.IOException;
 import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class TreeController {
     private final TreeService treeService;
 
     @GetMapping("/tree/{id}")
-    @ResponseBody
     public List<TreeNode> tree(
         @PathVariable Long id,
         @RequestParam(
@@ -31,7 +29,6 @@ public class TreeController {
     }
 
     @GetMapping(value = "/content/{id}", produces = MediaType.TEXT_PLAIN_VALUE)
-    @ResponseBody
     public String content(
         @PathVariable Long id,
         @RequestParam("path") String path
@@ -39,9 +36,7 @@ public class TreeController {
         return treeService.readText(id, path);
     }
     
-    
     @GetMapping("/file/{id}")
-    @ResponseBody
     public ResponseEntity<byte[]> file(
         @PathVariable Long id,
         @RequestParam("path") String path
