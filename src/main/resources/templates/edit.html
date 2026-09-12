@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="jp" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${document.name} + ' の編集 - Documents Bridge'">編集</title>
+</head>
+<body>
+    <a href="/">← 一覧に戻る</a>
+    <a th:href="@{/detail/{id}(id=${document.id})}">詳細に戻る</a>
+
+    <h1>編集</h1>
+
+    <div th:if="${document.icon}">
+        <p>現在のアイコン:</p>
+        <img th:src="@{/{icon}(icon=${document.icon})}" alt="icon" width="64" height="64">
+    </div>
+
+    <form th:action="@{/update/{id}(id=${document.id})}" method="post" enctype="multipart/form-data" th:object="${form}">
+        <label>プロジェクト名
+            <input type="text" th:field="*{name}">
+        </label>
+        <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+        <label>パス
+            <input type="text" th:field="*{path}">
+        </label>
+        <p th:if="${#fields.hasErrors('path')}" th:errors="*{path}"></p>
+        <label>説明
+            <input type="text" th:field="*{description}">
+        </label>
+        <p th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></p>
+        <label>カラー
+            <input type="color" th:field="*{color}">
+        </label>
+        <p th:if="${#fields.hasErrors('color')}" th:errors="*{color}"></p>
+        <label>アイコン（置換する場合のみ選択）
+            <input type="file" name="iconFile" accept="image/*">
+        </label>
+        <p th:if="${iconError}" th:text="${iconError}"></p>
+        <button type="submit">更新</button>
+    </form>
+
+    <hr>
+
+    <h2>削除</h2>
+    <form th:action="@{/delete/{id}(id=${document.id})}" method="post"
+          onsubmit="return confirm('削除しますか？関連アイコンも削除されます');">
+        <button type="submit">削除</button>
+    </form>
+</body>
+</html>
