@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="jp" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${document.name} + ' - Documents Bridge'">ワークスペース</title>
+    <link rel="stylesheet" th:href="@{/css/workspace.css}" href="/css/workspace.css">
+</head>
+<body>
+    <a href="/">← 一覧に戻る</a>
+
+    <h1 th:text="${document.name}">プロジェクト名</h1>
+    <p th:text="${document.path}">ルートパス</p>
+
+    <div class="workspace">
+        <div class="sidebar tree">
+            <h2>ツリー</h2>
+            <ul id="tree"></ul>
+        </div>
+        <div class="main">
+            <h2 id="fileName">ファイルを選択してください</h2>
+            <div id="viewer"></div>
+        </div>
+    </div>
+
+    <!-- projectId のみ inline で注入し、ロジック本体は外部JSに分離 -->
+    <script th:inline="javascript">
+        window.WORKSPACE_PROJECT_ID = /*[[${projectId}]]*/ 0;
+    </script>
+    <script th:src="@{/js/preview-config.js}" src="/js/preview-config.js"></script>
+    <script th:src="@{/js/workspace.js}" src="/js/workspace.js"></script>
+</body>
+</html>
