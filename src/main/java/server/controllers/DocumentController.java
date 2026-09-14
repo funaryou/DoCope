@@ -18,10 +18,8 @@ import server.exceptions.InvalidIconException;
 import server.services.DocumentService;
 
 import java.io.IOException;
+import java.util.List;
 
-import static server.views.Views.DETAIL;
-import static server.views.Views.EDIT;
-import static server.views.Views.INDEX;
 import static server.views.Views.REDIRECT_ROOT;
 import static server.views.Views.WORKSPACE;
 
@@ -31,25 +29,25 @@ public class DocumentController {
 
     private final DocumentService service;
 
+    private void populateWorkspace(
+        Model model,
+        DocumentResponse selected
+    ) {
+        List<DocumentResponse> documents = service.findAll();
+        model.addAttribute("documents", documents);
+        model.addAttribute("document", selected);
+        model.addAttribute("projectId", selected != null ? selected.getId() : null);
+        if (!model.containsAttribute("documentItem")) {
+            model.addAttribute("documentItem", new DocumentCreateForm());
+        }
+    }
+
     @GetMapping("/")
     public String index(
         Model model
     ) {
-        model.addAttribute("documents", service.findAll());
-        model.addAttribute("documentItem", new DocumentCreateForm());
-        return INDEX;
-    }
-
-    @GetMapping("/detail/{id}")
-    public String detail(
-        @PathVariable 
-        Long id,
-        Model model
-    ) {
-        DocumentResponse document = service.findById(id);
-        model.addAttribute("document",document);
-        model.addAttribute("filePath",document.getPath());
-        return DETAIL;
+        populateWorkspace(model, null);
+        return WORKSPACE;
     }
 
     @PostMapping(
@@ -69,38 +67,21 @@ public class DocumentController {
         Model model
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("documents",service.findAll());
-            return INDEX;
+            populateWorkspace(model, null);
+            return WORKSPACE;
         }
         try {
             service.create(form, iconFile);
+            return REDIRECT_ROOT;
         } catch (InvalidIconException e) {
-            model.addAttribute("documents", service.findAll());
             model.addAttribute("iconError", e.getMessage());
-            return INDEX;
+            populateWorkspace(model, null);
+            return WORKSPACE;
         } catch (IOException e) {
-            model.addAttribute("documents", service.findAll());
             model.addAttribute("iconError", "アイコン保存に失敗しました");
-            return INDEX;
+            populateWorkspace(model, null);
+            return WORKSPACE;
         }
-        return REDIRECT_ROOT;
-    }
-
-    @GetMapping("/edit/{id}")
-    public String edit(
-        @PathVariable
-        Long id,
-        Model model
-    ) {
-        DocumentResponse document = service.findById(id);
-        DocumentUpdateForm form = new DocumentUpdateForm();
-        form.setName(document.getName());
-        form.setPath(document.getPath());
-        form.setDescription(document.getDescription());
-        form.setColor(document.getColor());
-        model.addAttribute("document", document);
-        model.addAttribute("form", form);
-        return EDIT;
     }
 
     @PostMapping(
@@ -123,19 +104,20 @@ public class DocumentController {
     ) {
         DocumentResponse document = service.findById(id);
         if (result.hasErrors()) {
-            model.addAttribute("document", document);
-            return EDIT;
+            populateWorkspace(model, document);
+            model.addAttribute("iconError", "入力内容を確認してください");
+            return WORKSPACE;
         }
         try {
             service.update(id, form, iconFile);
         } catch (InvalidIconException e) {
-            model.addAttribute("document", document);
+            populateWorkspace(model, document);
             model.addAttribute("iconError", e.getMessage());
-            return EDIT;
+            return WORKSPACE;
         } catch (IOException e) {
-            model.addAttribute("document", document);
+            populateWorkspace(model, document);
             model.addAttribute("iconError", "アイコン保存に失敗しました");
-            return EDIT;
+            return WORKSPACE;
         }
         return REDIRECT_ROOT;
     }
@@ -156,8 +138,7 @@ public class DocumentController {
         Model model
     ) {
         DocumentResponse document = service.findById(id);
-        model.addAttribute("document", document);
-        model.addAttribute("projectId", document.getId());
+        populateWorkspace(model, document);
         return WORKSPACE;
     }
 

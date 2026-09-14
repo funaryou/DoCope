@@ -20,6 +20,9 @@ window.PreviewConfig = Object.freeze({
     "tsv",
     "svg"
   ]),
+  MARKDOWN_EXTS: Object.freeze(["md", "markdown"]),
+  CSV_EXTS: Object.freeze(["csv", "tsv"]),
+  SVG_EXT: "svg",
   IMAGE_EXTS: Object.freeze([
     "png",
     "jpg",
