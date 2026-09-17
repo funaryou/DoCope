@@ -1,5 +1,5 @@
 /**
- * ワークスペースのツリー描画・ファイルプレビュー制御（Sunset適用版）
+ * ワークスペースのツリー描画・ファイルプレビュー制御（Signal Atlas）
  * 拡張子定義は preview-config.js（window.PreviewConfig）を参照します。
  * projectId は workspace.html 側の inline script で
  * window.WORKSPACE_PROJECT_ID として注入されます。
@@ -13,6 +13,30 @@
   const projectId = window.WORKSPACE_PROJECT_ID;
   let currentPath = "";
   let currentFile = null;
+  const stateKey = `documents-bridge:workspace:${projectId}`;
+  const defaultTreeSettings = { showHidden: false, showSystem: false };
+  let workspaceState = loadWorkspaceState();
+
+  function loadWorkspaceState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(stateKey) || "{}");
+      return {
+        file: saved.file || null,
+        folders: Array.isArray(saved.folders) ? saved.folders : [],
+        settings: { ...defaultTreeSettings, ...(saved.settings || {}) }
+      };
+    } catch (e) {
+      return { file: null, folders: [], settings: { ...defaultTreeSettings } };
+    }
+  }
+
+  function saveWorkspaceState() {
+    try {
+      localStorage.setItem(stateKey, JSON.stringify(workspaceState));
+    } catch (e) {
+      // プライベートブラウジング等でlocalStorageが使えなくても閲覧自体は継続する。
+    }
+  }
 
   function extOf(path) {
     const i = path.lastIndexOf(".");
@@ -36,9 +60,12 @@
   }
 
   async function loadChildren(path) {
-    const url = path
-      ? `/tree/${projectId}?path=${encodeURIComponent(path)}`
-      : `/tree/${projectId}`;
+    const params = new URLSearchParams({
+      showHidden: String(workspaceState.settings.showHidden),
+      showSystem: String(workspaceState.settings.showSystem)
+    });
+    if (path) params.set("path", path);
+    const url = `/tree/${projectId}?${params.toString()}`;
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`ツリー取得に失敗しました（HTTP ${res.status}）`);
@@ -55,8 +82,13 @@
   }
 
   async function renderTree(path, container) {
+    showTreeMessage(container, "フォルダを読み込んでいます…");
     const children = await loadChildren(path);
     container.innerHTML = "";
+    if (children.length === 0) {
+      showTreeMessage(container, "表示できる項目はありません。", "empty");
+      return;
+    }
     for (const node of children) {
       if (node.directory) {
         const wrapper = document.createElement("div");
@@ -65,17 +97,24 @@
         row.className = "tree-row folder";
         const tw = document.createElement("span");
         tw.className = "tw";
-        tw.textContent = "▸";
+        tw.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+        const folderIcon = document.createElement("span");
+        folderIcon.className = "folder-icon";
+        folderIcon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M2.5 10h18"/></svg>';
         const tname = document.createElement("span");
         tname.className = "tname";
         tname.textContent = node.name;
+        row.dataset.path = node.relativePath;
+        row.setAttribute("aria-expanded", "false");
         row.appendChild(tw);
+        row.appendChild(folderIcon);
         row.appendChild(tname);
         const sub = document.createElement("div");
         sub.className = "tree-children";
         sub.hidden = true;
         row.addEventListener("click", async () => {
           const open = wrapper.classList.toggle("open");
+          row.setAttribute("aria-expanded", String(open));
           if (open && !sub.dataset.loaded) {
             currentPath = node.relativePath;
             try {
@@ -86,6 +125,12 @@
             }
           }
           sub.hidden = !open;
+          if (open) {
+            if (!workspaceState.folders.includes(node.relativePath)) workspaceState.folders.push(node.relativePath);
+          } else {
+            workspaceState.folders = workspaceState.folders.filter((folder) => folder !== node.relativePath && !folder.startsWith(node.relativePath + "/"));
+          }
+          saveWorkspaceState();
         });
         wrapper.appendChild(row);
         wrapper.appendChild(sub);
@@ -105,10 +150,16 @@
         row.appendChild(tw);
         row.appendChild(tname);
         row.appendChild(ext);
-        row.addEventListener("click", () => showFile(node));
+        row.addEventListener("click", () => showFile(node).catch((error) => showViewerMessage(error.message || "ファイルを読み込めませんでした。", "error")));
         container.appendChild(row);
       }
     }
+  }
+
+  function showViewerMessage(message, tone) {
+    const body = document.getElementById("viewerBody");
+    if (!body) return;
+    body.innerHTML = '<div class="viewer-message ' + (tone || "") + '"><span class="viewer-message-mark">!</span><p>' + escapeHtml(message) + '</p></div>';
   }
 
   function setModes(modes) {
@@ -184,6 +235,9 @@
     const body = document.getElementById("viewerBody");
     if (!body) return;
     currentFile = { path: relPath, ext };
+    workspaceState.file = relPath;
+    saveWorkspaceState();
+    showViewerMessage("ファイルを読み込んでいます…");
 
     // SVG: 描画／コードの切替（ユーザー指示。設計書の同時表示から変更）
     if (ext === SVG_EXT) {
@@ -281,16 +335,89 @@
   async function reloadTree(path) {
     const container = document.getElementById("tree");
     if (!container) return;
-    if (!path) {
-      await renderTree("", container);
-      return;
-    }
+    await restoreTree(container);
+  }
+
+  async function restoreTree(container) {
     await renderTree("", container);
+    const folders = [...workspaceState.folders].sort((a, b) => a.split("/").length - b.split("/").length);
+    for (const folderPath of folders) {
+      const row = container.querySelector('.tree-row.folder[data-path="' + CSS.escape(folderPath) + '"]');
+      if (!row || row.parentElement.classList.contains("open")) continue;
+      row.click();
+      // clickハンドラは非同期なので、生成された子要素の読み込み完了を待つ。
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const children = row.nextElementSibling;
+      while (row.parentElement.classList.contains("open") && !children.dataset.loaded && !children.querySelector(".tree-message.error")) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    }
+    if (workspaceState.file) {
+      const fileRow = container.querySelector('.tree-row.file[data-path="' + CSS.escape(workspaceState.file) + '"]');
+      if (fileRow) fileRow.click();
+    }
+  }
+
+  function setupTreeSettings() {
+    const controls = document.querySelectorAll("[data-tree-setting]");
+    controls.forEach((input) => {
+      const key = input.dataset.treeSetting;
+      input.checked = Boolean(workspaceState.settings[key]);
+      input.addEventListener("change", async () => {
+        workspaceState.settings[key] = input.checked;
+        saveWorkspaceState();
+        const tree = document.getElementById("tree");
+        if (tree) await restoreTree(tree);
+      });
+    });
+    document.querySelector("[data-reset-tree-settings]")?.addEventListener("click", async () => {
+      workspaceState.settings = { ...defaultTreeSettings };
+      controls.forEach((input) => { input.checked = false; });
+      saveWorkspaceState();
+      const tree = document.getElementById("tree");
+      if (tree) await restoreTree(tree);
+    });
+  }
+
+  function setupSidebarResizer() {
+    const resizer = document.querySelector("[data-sidebar-resizer]");
+    if (!resizer) return;
+    const root = document.documentElement;
+    const saved = Number(localStorage.getItem("documents-bridge:sidebar-width"));
+    if (saved >= 220 && saved <= 420) root.style.setProperty("--sidebar-width", saved + "px");
+    const setWidth = (width) => root.style.setProperty("--sidebar-width", Math.max(220, Math.min(420, width)) + "px");
+    const start = (event) => {
+      if (window.matchMedia("(max-width: 767px)").matches) return;
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = document.getElementById("sidebar")?.getBoundingClientRect().width || 280;
+      const move = (moveEvent) => setWidth(startWidth + moveEvent.clientX - startX);
+      const end = () => {
+        document.removeEventListener("pointermove", move);
+        document.removeEventListener("pointerup", end);
+        const width = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width"), 10);
+        if (width) localStorage.setItem("documents-bridge:sidebar-width", String(width));
+        document.body.classList.remove("resizing");
+      };
+      document.body.classList.add("resizing");
+      document.addEventListener("pointermove", move);
+      document.addEventListener("pointerup", end, { once: true });
+    };
+    resizer.addEventListener("pointerdown", start);
+    resizer.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const current = document.getElementById("sidebar")?.getBoundingClientRect().width || 280;
+      setWidth(current + (event.key === "ArrowRight" ? 16 : -16));
+      localStorage.setItem("documents-bridge:sidebar-width", getComputedStyle(root).getPropertyValue("--sidebar-width").trim());
+    });
   }
 
   const treeEl = document.getElementById("tree");
+  setupTreeSettings();
+  setupSidebarResizer();
   if (projectId !== null && projectId !== undefined && treeEl) {
-    renderTree("", treeEl).catch((error) => {
+    restoreTree(treeEl).catch((error) => {
       showTreeMessage(treeEl, error.message || "フォルダを読み込めませんでした。", "error");
     });
 

@@ -20,6 +20,8 @@ import server.services.DocumentService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static server.views.Views.REDIRECT_ROOT;
 import static server.views.Views.WORKSPACE;
@@ -36,6 +38,10 @@ public class DocumentController {
     ) {
         List<DocumentResponse> documents = service.findAll();
         model.addAttribute("documents", documents);
+        Map<Long, Boolean> pathAvailability = documents.stream()
+            .collect(Collectors.toMap(DocumentResponse::getId,
+                document -> service.isDirectoryAvailable(document.getPath())));
+        model.addAttribute("pathAvailability", pathAvailability);
         model.addAttribute("document", selected);
         model.addAttribute("projectId", selected != null ? selected.getId() : null);
         if (!model.containsAttribute("documentItem")) {

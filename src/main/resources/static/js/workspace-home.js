@@ -1,5 +1,5 @@
 /**
- * Sunsetホーム操作（モーダル・カードメニュー・紙色パレット）
+ * Signal Atlasホーム操作（モーダル・カードメニュー・識別色・アイコン入力）
  * デザイン元: doc/materials/design/deepseek-v4-flash-free/part2/screens/sunset/common.js
  * 登録・編集・削除は実バックエンド（/register /update/{id} /delete/{id}）へ送信します。
  */
@@ -22,13 +22,13 @@
   function setSelectedPaperColor(field, color) {
     const palette = document.querySelector('.color-palette[data-field="' + field + '"]');
     if (!palette) return;
-    const normalized = String(color || "#fff1e6").toLowerCase();
+    const normalized = String(color || "#e06445").toLowerCase();
     palette.querySelectorAll(".color-swatch").forEach((s) => {
       s.classList.toggle("on", s.dataset.color.toLowerCase() === normalized);
     });
     const form = palette.closest("form");
     const hidden = form ? form.querySelector("[data-color-input]") : null;
-    if (hidden) hidden.value = color || "#fff1e6";
+    if (hidden) hidden.value = color || "#e06445";
     const custom = palette.closest(".field") ? palette.closest(".field").querySelector(".color-custom") : null;
     if (custom && /^#[0-9a-f]{6}$/i.test(color || "")) custom.value = color;
   }
@@ -48,7 +48,8 @@
         if (nameEl) nameEl.value = b.dataset.name || "";
         if (pathEl) pathEl.value = b.dataset.path || "";
         if (descEl) descEl.value = b.dataset.description || "";
-        setSelectedPaperColor("edit-paper", b.dataset.color || "#fff1e6");
+        setSelectedPaperColor("edit-paper", b.dataset.color || "#e06445");
+        setIconPreview(document.querySelector('#modal-edit [data-icon-preview]'), b.dataset.icon || "");
       }
       if (kind === "delete") {
         const id = b.dataset.id;
@@ -59,7 +60,8 @@
         });
       }
       if (kind === "register") {
-        setSelectedPaperColor("register-paper", "#fff1e6");
+        setSelectedPaperColor("register-paper", "#e06445");
+        setIconPreview(document.querySelector('#modal-register [data-icon-preview]'), "");
       }
       openModal(kind);
     });
@@ -139,6 +141,31 @@
     });
   });
 
+  function setIconPreview(preview, source) {
+    if (!preview) return;
+    const imageSource = source && !String(source).startsWith("/") && !String(source).startsWith("data:")
+      ? "/" + source
+      : source;
+    preview.textContent = "";
+    preview.style.backgroundImage = imageSource ? 'url("' + imageSource + '")' : "";
+    preview.classList.toggle("has-image", Boolean(imageSource));
+    if (!imageSource) preview.textContent = "+";
+  }
+
+  document.querySelectorAll("[data-icon-input]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      const preview = input.closest("[data-icon-upload]")?.querySelector("[data-icon-preview]");
+      if (!file || !file.type.startsWith("image/")) {
+        setIconPreview(preview, "");
+        return;
+      }
+      const reader = new FileReader();
+      reader.addEventListener("load", () => setIconPreview(preview, reader.result));
+      reader.readAsDataURL(file);
+    });
+  });
+
   // カード文字色の自動切替: --card-color のRGB平均が白寄りなら黒系、黒寄りなら白系を適用
   var DARK_INK = "#2c160e";
   var LIGHT_INK = "#fff8f6";
@@ -168,91 +195,11 @@
     document.querySelectorAll(".card[data-card], .card[data-id]").forEach((card) => {
       var bg = card.dataset.color
         || (card.style.getPropertyValue("--card-color") || "").trim()
-        || "#fff1e6";
+        || "#e06445";
       card.style.setProperty("--card-ink", pickInk(bg));
     });
   }
 
   applyCardInk();
 
-  // ローカルサーバー経由のディレクトリ参照。ブラウザのファイル選択では絶対パスを取得できないため、
-  // サーバーが返す実在ディレクトリを選択してフォームへ設定する。
-  async function loadPathPicker(panel, path) {
-    const list = panel.querySelector("[data-picker-list]");
-    const current = panel.querySelector("[data-picker-current]");
-    const up = panel.querySelector("[data-picker-up]");
-    if (!list || !current) return;
-    list.textContent = "読み込み中…";
-    try {
-      const res = await fetch("/directories?path=" + encodeURIComponent(path || "."));
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "フォルダを読み込めませんでした");
-      panel.dataset.currentPath = data.path;
-      current.textContent = data.path;
-      if (up) {
-        up.disabled = !data.parent;
-        up.onclick = () => data.parent && loadPathPicker(panel, data.parent);
-      }
-      list.textContent = "";
-      if (!data.directories.length) {
-        list.textContent = "子フォルダはありません";
-        return;
-      }
-      data.directories.forEach((directory) => {
-        const row = document.createElement("div");
-        row.className = "path-picker-row";
-        const open = document.createElement("button");
-        open.type = "button";
-        open.className = "path-picker-name";
-        open.textContent = "› " + directory.name;
-        open.addEventListener("click", () => loadPathPicker(panel, directory.path));
-        const choose = document.createElement("button");
-        choose.type = "button";
-        choose.className = "path-picker-choose";
-        choose.textContent = "選択";
-        choose.addEventListener("click", () => {
-          const input = panel.closest(".field").querySelector("[data-path-input]");
-          if (input) input.value = directory.path;
-          panel.hidden = true;
-        });
-        row.append(open, choose);
-        list.appendChild(row);
-      });
-    } catch (error) {
-      list.textContent = error.message || "フォルダを読み込めませんでした";
-    }
-  }
-
-  document.querySelectorAll("[data-open-path-picker]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const field = button.closest(".field");
-      const panel = field && field.querySelector(".path-picker");
-      const input = field && field.querySelector("[data-path-input]");
-      if (!panel || !input) return;
-      document.querySelectorAll(".path-picker").forEach((other) => {
-        if (other !== panel) other.hidden = true;
-      });
-      panel.hidden = !panel.hidden;
-      if (!panel.hidden) loadPathPicker(panel, input.value || ".");
-    });
-  });
-
-  document.querySelectorAll("form").forEach((form) => {
-    const pathInput = form.querySelector("[data-path-input]");
-    if (!pathInput) return;
-    form.addEventListener("submit", async (event) => {
-      if (form.dataset.pathChecked === pathInput.value) return;
-      event.preventDefault();
-      const error = form.querySelector(".path-error");
-      if (error) error.textContent = "フォルダの存在を確認しています…";
-      try {
-        const res = await fetch("/directories?path=" + encodeURIComponent(pathInput.value));
-        if (!res.ok) throw new Error("存在するフォルダを参照から選択してください");
-        form.dataset.pathChecked = pathInput.value;
-        form.submit();
-      } catch (e) {
-        if (error) error.textContent = e.message;
-      }
-    });
-  });
 })();

@@ -65,6 +65,17 @@ public class DocumentService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isDirectoryAvailable(String path) {
+        try {
+            return path != null
+                && !path.isBlank()
+                && Files.isDirectory(Path.of(path).toAbsolutePath().normalize());
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
     public DocumentResponse findById(
         Long id
     ) {

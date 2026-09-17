@@ -22,10 +22,10 @@
            th:href="@{/workspace/{id}(id=${doc.id})}"
            th:title="${doc.name}" title="プロジェクト"
            th:data-proj="${'p-' + doc.id}"
-           th:style="'--sticky-bg:' + (${doc.color} != null ? ${doc.color} : '#fff1e6')">
+           th:style="'--sticky-bg:' + (${doc.color} != null ? ${doc.color} : '#e06445')">
             <span class="eyelet"></span>
             <img th:if="${doc.icon}" th:src="@{/{icon}(icon=${doc.icon})}" alt="icon"
-                 style="width:26px;height:26px;border-radius:8px;object-fit:cover;position:relative;z-index:3">
+                 style="border-radius:8px;object-fit:cover;position:relative;z-index:3">
             <span th:unless="${doc.icon}" class="ab-ic" th:text="${#strings.substring(doc.name, 0, 1)}">p</span>
         </a>
         <div class="ab-sep"></div>
@@ -54,13 +54,14 @@
 
             <div class="card-grid">
                 <article th:each="doc : ${documents}" class="card" role="button" tabindex="0"
+                         th:classappend="${!pathAvailability[doc.id]} ? ' unavailable' : ''"
                          th:data-id="${doc.id}"
                          th:data-name="${doc.name}"
                          th:data-path="${doc.path}"
                          th:data-description="${doc.description}"
                          th:data-color="${doc.color}"
                          th:data-icon="${doc.icon}"
-                         th:style="'--card-color:' + (${doc.color} != null ? ${doc.color} : '#fff1e6') + ';--card-ink:#2c160e'"
+                         th:style="'--card-color:' + (${doc.color} != null ? ${doc.color} : '#e06445') + ';--card-ink:#f2f0ea'"
                          data-card>
                     <div class="card-top">
                         <img th:if="${doc.icon}" th:src="@{/{icon}(icon=${doc.icon})}" alt="icon"
@@ -70,6 +71,8 @@
                         <div class="t">
                             <h3 th:text="${doc.name}">プロジェクト名</h3>
                             <p class="path" th:text="${doc.path}">/path</p>
+                            <span class="card-state" th:if="${pathAvailability[doc.id]}"><i></i>接続可能</span>
+                            <span class="card-state bad" th:unless="${pathAvailability[doc.id]}"><i></i>フォルダ未検出</span>
                         </div>
                         <div class="card-menu">
                             <button class="card-menu-btn" type="button" aria-label="プロジェクトメニュー" aria-haspopup="true"><span class="more-icon"><i></i><i></i><i></i></span></button>
@@ -181,10 +184,10 @@
                         <button type="button" class="color-swatch" data-color="#d6d9dd" style="background:#d6d9dd" title="シルバー" aria-label="シルバー"></button>
                     </div>
                     <div class="color-custom-wrap">
-                        <input type="color" value="#fff1e6" class="color-custom" aria-label="カスタム色">
+                        <input type="color" value="#e06445" class="color-custom" aria-label="カスタム色">
                         <span class="hint" style="margin:0">カスタム色も指定できます</span>
                     </div>
-                    <input type="hidden" name="color" value="#fff1e6" data-color-input>
+                    <input type="hidden" name="color" value="#e06445" data-color-input>
                     <p class="hint">一覧のマーカーとプロジェクトアイコンに使います。</p>
                 </div>
                 <div class="field">
@@ -216,17 +219,17 @@
             <div class="modal-body">
                 <div class="field">
                     <label>プロジェクト名<span class="req">*</span></label>
-                    <input type="text" name="name" data-edit-name>
+                    <input type="text" name="name" data-edit-name th:value="${document != null ? document.name : ''}">
                 </div>
                 <div class="field">
                     <label>ルートディレクトリパス<span class="req">*</span></label>
-                    <input type="text" name="path" class="mono" data-edit-path>
+                    <input type="text" name="path" class="mono" data-edit-path th:value="${document != null ? document.path : ''}">
                     <p class="path-error" th:if="${pathError}" th:text="${pathError}"></p>
                     <p class="hint">実在するフォルダの絶対パスを指定してください。</p>
                 </div>
                 <div class="field">
                     <label>説明</label>
-                    <textarea name="description" data-edit-description></textarea>
+                    <textarea name="description" data-edit-description th:text="${document != null ? document.description : ''}"></textarea>
                 </div>
                 <div class="field">
                     <label>プロジェクト識別色</label>
@@ -241,10 +244,10 @@
                         <button type="button" class="color-swatch" data-color="#d6d9dd" style="background:#d6d9dd" title="シルバー" aria-label="シルバー"></button>
                     </div>
                     <div class="color-custom-wrap">
-                        <input type="color" value="#fff1e6" class="color-custom" aria-label="カスタム色">
+                        <input type="color" value="#e06445" class="color-custom" aria-label="カスタム色">
                         <span class="hint" style="margin:0">カスタム色も指定できます</span>
                     </div>
-                    <input type="hidden" name="color" value="#fff1e6" data-color-input>
+                    <input type="hidden" name="color" value="#e06445" data-color-input>
                 </div>
                 <div class="field">
                     <label>プロジェクトアイコン</label>

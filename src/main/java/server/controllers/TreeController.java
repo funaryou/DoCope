@@ -20,12 +20,11 @@ public class TreeController {
     @GetMapping("/tree/{id}")
     public List<TreeNode> tree(
         @PathVariable Long id,
-        @RequestParam(
-            value = "path",
-            required = false
-        ) String path
+        @RequestParam(value = "path", required = false) String path,
+        @RequestParam(value = "showHidden", defaultValue = "false") boolean showHidden,
+        @RequestParam(value = "showSystem", defaultValue = "false") boolean showSystem
     ) throws IOException{
-        return treeService.listChildren(id,path);
+        return treeService.listChildren(id, path, showHidden, showSystem);
     }
 
     @GetMapping(value = "/content/{id}", produces = MediaType.TEXT_PLAIN_VALUE)

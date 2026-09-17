@@ -30,7 +30,9 @@ public class TreeService {
 
     public List<TreeNode> listChildren(
         Long projectId,
-        String relativePath
+        String relativePath,
+        boolean showHidden,
+        boolean showSystem
     ) throws IOException {
         DocumentItem item = findItem(projectId);
         Path root = Path.of(item.getPath());
@@ -43,6 +45,7 @@ public class TreeService {
                     .getFileName()
                     .toString()
                 ))
+                .filter(p -> isVisible(p.getFileName().toString(), showHidden, showSystem))
                 .map(
                     (p -> new TreeNode(
                         p.getFileName().toString(),
@@ -52,6 +55,12 @@ public class TreeService {
                 )
                 .toList();
         }
+    }
+
+    private boolean isVisible(String name, boolean showHidden, boolean showSystem) {
+        boolean systemEntry = ".git".equals(name) || ".DS_Store".equals(name);
+        if (systemEntry) return showSystem;
+        return showHidden || !name.startsWith(".");
     }
 
     private Path resolveTarget(
