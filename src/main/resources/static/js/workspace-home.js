@@ -174,4 +174,85 @@
   }
 
   applyCardInk();
+
+  // ローカルサーバー経由のディレクトリ参照。ブラウザのファイル選択では絶対パスを取得できないため、
+  // サーバーが返す実在ディレクトリを選択してフォームへ設定する。
+  async function loadPathPicker(panel, path) {
+    const list = panel.querySelector("[data-picker-list]");
+    const current = panel.querySelector("[data-picker-current]");
+    const up = panel.querySelector("[data-picker-up]");
+    if (!list || !current) return;
+    list.textContent = "読み込み中…";
+    try {
+      const res = await fetch("/directories?path=" + encodeURIComponent(path || "."));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "フォルダを読み込めませんでした");
+      panel.dataset.currentPath = data.path;
+      current.textContent = data.path;
+      if (up) {
+        up.disabled = !data.parent;
+        up.onclick = () => data.parent && loadPathPicker(panel, data.parent);
+      }
+      list.textContent = "";
+      if (!data.directories.length) {
+        list.textContent = "子フォルダはありません";
+        return;
+      }
+      data.directories.forEach((directory) => {
+        const row = document.createElement("div");
+        row.className = "path-picker-row";
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "path-picker-name";
+        open.textContent = "› " + directory.name;
+        open.addEventListener("click", () => loadPathPicker(panel, directory.path));
+        const choose = document.createElement("button");
+        choose.type = "button";
+        choose.className = "path-picker-choose";
+        choose.textContent = "選択";
+        choose.addEventListener("click", () => {
+          const input = panel.closest(".field").querySelector("[data-path-input]");
+          if (input) input.value = directory.path;
+          panel.hidden = true;
+        });
+        row.append(open, choose);
+        list.appendChild(row);
+      });
+    } catch (error) {
+      list.textContent = error.message || "フォルダを読み込めませんでした";
+    }
+  }
+
+  document.querySelectorAll("[data-open-path-picker]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const field = button.closest(".field");
+      const panel = field && field.querySelector(".path-picker");
+      const input = field && field.querySelector("[data-path-input]");
+      if (!panel || !input) return;
+      document.querySelectorAll(".path-picker").forEach((other) => {
+        if (other !== panel) other.hidden = true;
+      });
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) loadPathPicker(panel, input.value || ".");
+    });
+  });
+
+  document.querySelectorAll("form").forEach((form) => {
+    const pathInput = form.querySelector("[data-path-input]");
+    if (!pathInput) return;
+    form.addEventListener("submit", async (event) => {
+      if (form.dataset.pathChecked === pathInput.value) return;
+      event.preventDefault();
+      const error = form.querySelector(".path-error");
+      if (error) error.textContent = "フォルダの存在を確認しています…";
+      try {
+        const res = await fetch("/directories?path=" + encodeURIComponent(pathInput.value));
+        if (!res.ok) throw new Error("存在するフォルダを参照から選択してください");
+        form.dataset.pathChecked = pathInput.value;
+        form.submit();
+      } catch (e) {
+        if (error) error.textContent = e.message;
+      }
+    });
+  });
 })();

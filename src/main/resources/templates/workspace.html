@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja" data-theme="sunset" xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" data-theme="signal-atlas" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${document != null ? document.name + ' - Documents Bridge' : 'Documents Bridge'}">Documents Bridge</title>
     <link rel="stylesheet" th:href="@{/css/workspace.css}" href="/css/workspace.css">
 </head>
-<body th:class="${document != null ? 'view-file' : 'view-home'}" data-screen="workspace" data-style="sunset">
+<body th:class="${document != null ? 'view-file' : 'view-home'}" data-screen="workspace" data-style="signal-atlas">
 
 <div class="ws">
     <!-- アクティビティバー（ホーム⇔ファイル閲覧の切替） -->
@@ -51,6 +51,7 @@
                 </button>
             </div>
             <p th:if="${iconError}" th:text="${iconError}" style="color:var(--danger);margin-bottom:12px"></p>
+            <p th:if="${pathError}" th:text="${pathError}" class="form-error-banner"></p>
 
             <div class="card-grid">
                 <article th:each="doc : ${documents}" class="card" role="button" tabindex="0"
@@ -94,7 +95,7 @@
                 </article>
             </div>
             <div th:if="${#lists.isEmpty(documents)}" class="empty">
-                <div class="em-icon">📁</div>
+                <div class="em-icon" aria-hidden="true">+</div>
                 <h4>プロジェクトが未登録です</h4>
                 <p>「新規登録」からルートディレクトリ（フォルダ）を登録してください。</p>
             </div>
@@ -123,13 +124,13 @@
             </span>
         </div>
         <div class="viewer-body" id="viewerBody">
-            <div class="empty"><div class="em-icon">📄</div><h4>ファイルを選択してください</h4><p>左のツリーからファイルを選ぶと内容が表示されます。</p></div>
+            <div class="empty"><div class="em-icon" aria-hidden="true">/</div><h4>ファイルを選択してください</h4><p>左のツリーからファイルを選ぶと内容が表示されます。</p></div>
         </div>
     </main>
 </div>
 
 <!-- 新規登録モーダル -->
-<div class="modal-back" id="modal-register">
+<div class="modal-back" id="modal-register" th:classappend="${pathError != null and document == null} ? ' on' : ''">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="regTitle">
         <form th:action="@{/register}" method="post" enctype="multipart/form-data" th:object="${documentItem}">
             <div class="modal-head">
@@ -144,7 +145,15 @@
                 </div>
                 <div class="field">
                     <label>ルートディレクトリパス<span class="req">*</span></label>
-                    <input type="text" th:field="*{path}" placeholder="/workspace/projects/…" class="mono">
+                    <div class="path-input-row">
+                        <input type="text" th:field="*{path}" placeholder="/workspace/projects/…" class="mono" data-path-input>
+                        <button type="button" class="btn path-browse" data-open-path-picker>参照</button>
+                    </div>
+                    <p class="path-error" th:if="${pathError}" th:text="${pathError}"></p>
+                    <div class="path-picker" hidden>
+                        <div class="path-picker-head"><span data-picker-current>.</span><button type="button" class="btn" data-picker-up>上へ</button></div>
+                        <div class="path-picker-list" data-picker-list></div>
+                    </div>
                     <p class="hint">ファイルではなく<b>フォルダ</b>のパスを登録します。</p>
                 </div>
                 <div class="field">
@@ -152,7 +161,7 @@
                     <textarea th:field="*{description}" placeholder="自由メモ（任意）"></textarea>
                 </div>
                 <div class="field">
-                    <label>紙の色</label>
+                    <label>プロジェクト識別色</label>
                     <div class="color-palette" data-field="register-paper">
                         <button type="button" class="color-swatch on" data-color="#fff1e6" style="background:#fff1e6" title="クリーム（既定）" aria-label="クリーム"></button>
                         <button type="button" class="color-swatch" data-color="#ffefb0" style="background:#ffefb0" title="生成りイエロー" aria-label="イエロー"></button>
@@ -168,7 +177,7 @@
                         <span class="hint" style="margin:0">カスタム色も指定できます</span>
                     </div>
                     <input type="hidden" name="color" value="#fff1e6" data-color-input>
-                    <p class="hint">ホームの付箋（紙）の背景色です。編集でも変更できます。</p>
+                    <p class="hint">一覧の識別マーカーに使います。行全体は着色しません。</p>
                 </div>
                 <div class="field">
                     <label>プロジェクトアイコン</label>
@@ -185,7 +194,7 @@
 </div>
 
 <!-- 編集モーダル -->
-<div class="modal-back" id="modal-edit">
+<div class="modal-back" id="modal-edit" th:classappend="${pathError != null and document != null} ? ' on' : ''">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
         <form id="editForm" method="post" enctype="multipart/form-data">
             <div class="modal-head">
@@ -199,14 +208,22 @@
                 </div>
                 <div class="field">
                     <label>ルートディレクトリパス<span class="req">*</span></label>
-                    <input type="text" name="path" class="mono" data-edit-path>
+                    <div class="path-input-row">
+                        <input type="text" name="path" class="mono" data-edit-path data-path-input>
+                        <button type="button" class="btn path-browse" data-open-path-picker>参照</button>
+                    </div>
+                    <p class="path-error" th:if="${pathError}" th:text="${pathError}"></p>
+                    <div class="path-picker" hidden>
+                        <div class="path-picker-head"><span data-picker-current>.</span><button type="button" class="btn" data-picker-up>上へ</button></div>
+                        <div class="path-picker-list" data-picker-list></div>
+                    </div>
                 </div>
                 <div class="field">
                     <label>説明</label>
                     <textarea name="description" data-edit-description></textarea>
                 </div>
                 <div class="field">
-                    <label>紙の色</label>
+                    <label>プロジェクト識別色</label>
                     <div class="color-palette" data-field="edit-paper">
                         <button type="button" class="color-swatch on" data-color="#fff1e6" style="background:#fff1e6" title="クリーム（既定）" aria-label="クリーム"></button>
                         <button type="button" class="color-swatch" data-color="#ffefb0" style="background:#ffefb0" title="生成りイエロー" aria-label="イエロー"></button>

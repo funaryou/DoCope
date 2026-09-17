@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import server.dto.DocumentCreateForm;
 import server.dto.DocumentResponse;
 import server.dto.DocumentUpdateForm;
+import server.exceptions.InvalidDocumentPathException;
 import server.exceptions.InvalidIconException;
 import server.services.DocumentService;
 
@@ -81,6 +82,10 @@ public class DocumentController {
             model.addAttribute("iconError", "アイコン保存に失敗しました");
             populateWorkspace(model, null);
             return WORKSPACE;
+        } catch (InvalidDocumentPathException e) {
+            model.addAttribute("pathError", e.getMessage());
+            populateWorkspace(model, null);
+            return WORKSPACE;
         }
     }
 
@@ -117,6 +122,10 @@ public class DocumentController {
         } catch (IOException e) {
             populateWorkspace(model, document);
             model.addAttribute("iconError", "アイコン保存に失敗しました");
+            return WORKSPACE;
+        } catch (InvalidDocumentPathException e) {
+            populateWorkspace(model, document);
+            model.addAttribute("pathError", e.getMessage());
             return WORKSPACE;
         }
         return REDIRECT_ROOT;

@@ -40,7 +40,18 @@
       ? `/tree/${projectId}?path=${encodeURIComponent(path)}`
       : `/tree/${projectId}`;
     const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`ツリー取得に失敗しました（HTTP ${res.status}）`);
+    }
     return res.json();
+  }
+
+  function showTreeMessage(container, message, tone) {
+    container.innerHTML = "";
+    const messageEl = document.createElement("p");
+    messageEl.className = "tree-message" + (tone ? " " + tone : "");
+    messageEl.textContent = message;
+    container.appendChild(messageEl);
   }
 
   async function renderTree(path, container) {
@@ -66,8 +77,13 @@
         row.addEventListener("click", async () => {
           const open = wrapper.classList.toggle("open");
           if (open && !sub.dataset.loaded) {
-            await renderTree(node.relativePath, sub);
-            sub.dataset.loaded = "1";
+            currentPath = node.relativePath;
+            try {
+              await renderTree(node.relativePath, sub);
+              sub.dataset.loaded = "1";
+            } catch (error) {
+              showTreeMessage(sub, error.message || "フォルダを読み込めませんでした。", "error");
+            }
           }
           sub.hidden = !open;
         });
@@ -274,7 +290,9 @@
 
   const treeEl = document.getElementById("tree");
   if (projectId !== null && projectId !== undefined && treeEl) {
-    renderTree("", treeEl);
+    renderTree("", treeEl).catch((error) => {
+      showTreeMessage(treeEl, error.message || "フォルダを読み込めませんでした。", "error");
+    });
 
     const source = new EventSource(`/events/${projectId}`);
     source.onmessage = () => reloadTree(currentPath);
