@@ -43,7 +43,6 @@
             <div class="sec-head">
                 <div>
                     <h2>登録プロジェクト</h2>
-                    <p class="count"><b th:text="${#lists.size(documents)}">0</b> 件のルートディレクトリを登録済み</p>
                 </div>
                 <button class="btn primary" type="button" data-open-modal="register">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -80,7 +79,8 @@
                                         th:data-name="${doc.name}"
                                         th:data-path="${doc.path}"
                                         th:data-description="${doc.description}"
-                                        th:data-color="${doc.color}">編集</button>
+                                        th:data-color="${doc.color}"
+                                        th:data-icon="${doc.icon}">編集</button>
                                 <button type="button" role="menuitem" data-open-modal="delete" class="danger"
                                         th:data-id="${doc.id}"
                                         th:data-name="${doc.name}">削除</button>
@@ -111,8 +111,23 @@
             </div>
             <div class="ph-path" id="projPath" th:text="${document != null ? document.path : ''}"></div>
         </div>
+        <div class="tree-tools" aria-label="フォルダ表示設定">
+            <div class="tree-tools-head">
+                <span>表示設定</span>
+                <button type="button" class="tree-reset" data-reset-tree-settings>初期化</button>
+            </div>
+            <label class="toggle-row">
+                <input type="checkbox" data-tree-setting="showHidden">
+                <span>隠しフォルダ／ファイルを表示</span>
+            </label>
+            <label class="toggle-row">
+                <input type="checkbox" data-tree-setting="showSystem">
+                <span><code>.git</code> / <code>.DS_Store</code>を表示</span>
+            </label>
+        </div>
         <div class="tree" id="tree"></div>
     </aside>
+    <div class="sidebar-resizer" data-sidebar-resizer role="separator" aria-label="フォルダツリーの幅を変更" aria-orientation="vertical" tabindex="0"></div>
 
     <!-- ファイル閲覧ビュー（メイン・ビューア） -->
     <main class="viewer">
@@ -145,16 +160,9 @@
                 </div>
                 <div class="field">
                     <label>ルートディレクトリパス<span class="req">*</span></label>
-                    <div class="path-input-row">
-                        <input type="text" th:field="*{path}" placeholder="/workspace/projects/…" class="mono" data-path-input>
-                        <button type="button" class="btn path-browse" data-open-path-picker>参照</button>
-                    </div>
+                    <input type="text" th:field="*{path}" placeholder="/workspace/projects/…" class="mono">
                     <p class="path-error" th:if="${pathError}" th:text="${pathError}"></p>
-                    <div class="path-picker" hidden>
-                        <div class="path-picker-head"><span data-picker-current>.</span><button type="button" class="btn" data-picker-up>上へ</button></div>
-                        <div class="path-picker-list" data-picker-list></div>
-                    </div>
-                    <p class="hint">ファイルではなく<b>フォルダ</b>のパスを登録します。</p>
+                    <p class="hint">ファイルではなく<b>実在するフォルダ</b>の絶対パスを入力します。</p>
                 </div>
                 <div class="field">
                     <label>説明</label>
@@ -163,26 +171,30 @@
                 <div class="field">
                     <label>プロジェクト識別色</label>
                     <div class="color-palette" data-field="register-paper">
-                        <button type="button" class="color-swatch on" data-color="#fff1e6" style="background:#fff1e6" title="クリーム（既定）" aria-label="クリーム"></button>
-                        <button type="button" class="color-swatch" data-color="#ffefb0" style="background:#ffefb0" title="生成りイエロー" aria-label="イエロー"></button>
-                        <button type="button" class="color-swatch" data-color="#c9e8d0" style="background:#c9e8d0" title="ミント" aria-label="ミント"></button>
-                        <button type="button" class="color-swatch" data-color="#f5cdc9" style="background:#f5cdc9" title="桜" aria-label="桜"></button>
-                        <button type="button" class="color-swatch" data-color="#c9dcf5" style="background:#c9dcf5" title="空色" aria-label="空色"></button>
-                        <button type="button" class="color-swatch" data-color="#f5e6d3" style="background:#f5e6d3" title="クラフト" aria-label="クラフト"></button>
-                        <button type="button" class="color-swatch" data-color="#e8e1dc" style="background:#e8e1dc" title="温灰" aria-label="温灰"></button>
-                        <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff" title="白" aria-label="白"></button>
+                        <button type="button" class="color-swatch on" data-color="#e06445" style="background:#e06445" title="バーミリオン（既定）" aria-label="バーミリオン"></button>
+                        <button type="button" class="color-swatch" data-color="#f2b84b" style="background:#f2b84b" title="アンバー" aria-label="アンバー"></button>
+                        <button type="button" class="color-swatch" data-color="#64b6a8" style="background:#64b6a8" title="シーグラス" aria-label="シーグラス"></button>
+                        <button type="button" class="color-swatch" data-color="#76a9e8" style="background:#76a9e8" title="ブルー" aria-label="ブルー"></button>
+                        <button type="button" class="color-swatch" data-color="#bd8cff" style="background:#bd8cff" title="バイオレット" aria-label="バイオレット"></button>
+                        <button type="button" class="color-swatch" data-color="#ef7eae" style="background:#ef7eae" title="ローズ" aria-label="ローズ"></button>
+                        <button type="button" class="color-swatch" data-color="#86a99a" style="background:#86a99a" title="モス" aria-label="モス"></button>
+                        <button type="button" class="color-swatch" data-color="#d6d9dd" style="background:#d6d9dd" title="シルバー" aria-label="シルバー"></button>
                     </div>
                     <div class="color-custom-wrap">
                         <input type="color" value="#fff1e6" class="color-custom" aria-label="カスタム色">
                         <span class="hint" style="margin:0">カスタム色も指定できます</span>
                     </div>
                     <input type="hidden" name="color" value="#fff1e6" data-color-input>
-                    <p class="hint">一覧の識別マーカーに使います。行全体は着色しません。</p>
+                    <p class="hint">一覧のマーカーとプロジェクトアイコンに使います。</p>
                 </div>
                 <div class="field">
                     <label>プロジェクトアイコン</label>
-                    <input type="file" name="iconFile" accept="image/*">
-                    <p class="hint">data/icons/ に UUID ファイルとして保存。未指定時は頭文字で表示します。</p>
+                    <label class="icon-upload-box" data-icon-upload>
+                        <input type="file" name="iconFile" accept="image/*" data-icon-input>
+                        <span class="icon-upload-preview" data-icon-preview aria-hidden="true">+</span>
+                        <span class="icon-upload-copy"><b>画像をアップロード</b><small>PNG / JPG / GIF・任意</small></span>
+                    </label>
+                    <p class="hint">画像を選ぶとプレビューできます。未指定時は頭文字で表示します。</p>
                 </div>
             </div>
             <div class="modal-foot">
@@ -208,15 +220,9 @@
                 </div>
                 <div class="field">
                     <label>ルートディレクトリパス<span class="req">*</span></label>
-                    <div class="path-input-row">
-                        <input type="text" name="path" class="mono" data-edit-path data-path-input>
-                        <button type="button" class="btn path-browse" data-open-path-picker>参照</button>
-                    </div>
+                    <input type="text" name="path" class="mono" data-edit-path>
                     <p class="path-error" th:if="${pathError}" th:text="${pathError}"></p>
-                    <div class="path-picker" hidden>
-                        <div class="path-picker-head"><span data-picker-current>.</span><button type="button" class="btn" data-picker-up>上へ</button></div>
-                        <div class="path-picker-list" data-picker-list></div>
-                    </div>
+                    <p class="hint">実在するフォルダの絶対パスを指定してください。</p>
                 </div>
                 <div class="field">
                     <label>説明</label>
@@ -225,14 +231,14 @@
                 <div class="field">
                     <label>プロジェクト識別色</label>
                     <div class="color-palette" data-field="edit-paper">
-                        <button type="button" class="color-swatch on" data-color="#fff1e6" style="background:#fff1e6" title="クリーム（既定）" aria-label="クリーム"></button>
-                        <button type="button" class="color-swatch" data-color="#ffefb0" style="background:#ffefb0" title="生成りイエロー" aria-label="イエロー"></button>
-                        <button type="button" class="color-swatch" data-color="#c9e8d0" style="background:#c9e8d0" title="ミント" aria-label="ミント"></button>
-                        <button type="button" class="color-swatch" data-color="#f5cdc9" style="background:#f5cdc9" title="桜" aria-label="桜"></button>
-                        <button type="button" class="color-swatch" data-color="#c9dcf5" style="background:#c9dcf5" title="空色" aria-label="空色"></button>
-                        <button type="button" class="color-swatch" data-color="#f5e6d3" style="background:#f5e6d3" title="クラフト" aria-label="クラフト"></button>
-                        <button type="button" class="color-swatch" data-color="#e8e1dc" style="background:#e8e1dc" title="温灰" aria-label="温灰"></button>
-                        <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff" title="白" aria-label="白"></button>
+                        <button type="button" class="color-swatch on" data-color="#e06445" style="background:#e06445" title="バーミリオン（既定）" aria-label="バーミリオン"></button>
+                        <button type="button" class="color-swatch" data-color="#f2b84b" style="background:#f2b84b" title="アンバー" aria-label="アンバー"></button>
+                        <button type="button" class="color-swatch" data-color="#64b6a8" style="background:#64b6a8" title="シーグラス" aria-label="シーグラス"></button>
+                        <button type="button" class="color-swatch" data-color="#76a9e8" style="background:#76a9e8" title="ブルー" aria-label="ブルー"></button>
+                        <button type="button" class="color-swatch" data-color="#bd8cff" style="background:#bd8cff" title="バイオレット" aria-label="バイオレット"></button>
+                        <button type="button" class="color-swatch" data-color="#ef7eae" style="background:#ef7eae" title="ローズ" aria-label="ローズ"></button>
+                        <button type="button" class="color-swatch" data-color="#86a99a" style="background:#86a99a" title="モス" aria-label="モス"></button>
+                        <button type="button" class="color-swatch" data-color="#d6d9dd" style="background:#d6d9dd" title="シルバー" aria-label="シルバー"></button>
                     </div>
                     <div class="color-custom-wrap">
                         <input type="color" value="#fff1e6" class="color-custom" aria-label="カスタム色">
@@ -241,8 +247,12 @@
                     <input type="hidden" name="color" value="#fff1e6" data-color-input>
                 </div>
                 <div class="field">
-                    <label>プロジェクトアイコン（再アップロード可）</label>
-                    <input type="file" name="iconFile" accept="image/*">
+                    <label>プロジェクトアイコン</label>
+                    <label class="icon-upload-box" data-icon-upload>
+                        <input type="file" name="iconFile" accept="image/*" data-icon-input>
+                        <span class="icon-upload-preview" data-icon-preview aria-hidden="true">+</span>
+                        <span class="icon-upload-copy"><b>画像をアップロード</b><small>現在の画像は新しい画像で置き換わります</small></span>
+                    </label>
                 </div>
             </div>
             <div class="modal-foot">
