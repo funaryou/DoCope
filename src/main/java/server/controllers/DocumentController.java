@@ -16,6 +16,7 @@ import server.dto.DocumentResponse;
 import server.dto.DocumentUpdateForm;
 import server.exceptions.InvalidDocumentPathException;
 import server.exceptions.InvalidIconException;
+import server.exceptions.DocumentNotFoundException;
 import server.services.DocumentService;
 
 import java.io.IOException;
@@ -74,6 +75,7 @@ public class DocumentController {
         Model model
     ) {
         if (result.hasErrors()) {
+            model.addAttribute("registerValidationError", true);
             populateWorkspace(model, null);
             return WORKSPACE;
         }
@@ -115,6 +117,7 @@ public class DocumentController {
     ) {
         DocumentResponse document = service.findById(id);
         if (result.hasErrors()) {
+            model.addAttribute("editValidationError", true);
             populateWorkspace(model, document);
             model.addAttribute("iconError", "入力内容を確認してください");
             return WORKSPACE;
@@ -152,7 +155,14 @@ public class DocumentController {
         Long id,
         Model model
     ) {
-        DocumentResponse document = service.findById(id);
+        final DocumentResponse document;
+        try {
+            document = service.findById(id);
+        } catch (DocumentNotFoundException e) {
+            // A stale bookmark or deleted project should return to the
+            // project home instead of exposing the generic error response.
+            return REDIRECT_ROOT;
+        }
         populateWorkspace(model, document);
         return WORKSPACE;
     }

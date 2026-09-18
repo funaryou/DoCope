@@ -41,10 +41,14 @@ public class TreeService {
             : FsSecurity.resolve(root, relativePath);
         try(Stream<Path> stream = Files.list(target)) {
             return stream
-                .sorted(Comparator.comparing(p -> p
-                    .getFileName()
-                    .toString()
-                ))
+                // VS Code-style tree order: directories first, then files;
+                // keep alphabetical order within each group.
+                .sorted(
+                    Comparator
+                        .comparing((Path p) -> !Files.isDirectory(p))
+                        .thenComparing(p -> p.getFileName().toString(), String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(p -> p.getFileName().toString())
+                )
                 .filter(p -> isVisible(p.getFileName().toString(), showHidden, showSystem))
                 .map(
                     (p -> new TreeNode(

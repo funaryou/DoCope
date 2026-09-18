@@ -67,6 +67,10 @@
     });
   });
 
+  document.querySelectorAll("[data-open-tree-settings]").forEach((b) => {
+    b.addEventListener("click", () => openModal("tree-settings"));
+  });
+
   document.querySelectorAll("[data-close-modal]").forEach((b) => {
     b.addEventListener("click", closeAllModals);
   });
@@ -143,12 +147,14 @@
 
   function setIconPreview(preview, source) {
     if (!preview) return;
+    const uploadBox = preview.closest("[data-icon-upload]");
     const imageSource = source && !String(source).startsWith("/") && !String(source).startsWith("data:")
       ? "/" + source
       : source;
     preview.textContent = "";
     preview.style.backgroundImage = imageSource ? 'url("' + imageSource + '")' : "";
     preview.classList.toggle("has-image", Boolean(imageSource));
+    uploadBox?.classList.toggle("has-image", Boolean(imageSource));
     if (!imageSource) preview.textContent = "+";
   }
 
