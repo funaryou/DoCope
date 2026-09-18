@@ -1,7 +1,2552 @@
-/* workspace.html から切り出した専用CSS */
-.workspace { display: flex; gap: 16px; }
-.sidebar { width: 300px; border-right: 1px solid #ccc; padding-right: 16px; }
-.main { flex: 1; min-width: 0; }
-.tree ul { list-style: none; padding-left: 16px; }
-.tree button { background: none; border: none; cursor: pointer; padding: 2px 4px; }
-pre { white-space: pre-wrap; background: #f5f5f5; padding: 16px; border-radius: 4px; }
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
+:root {
+  --sidebar-width: 280px;
+  --canvas: #111315;
+  --panel: #181b1e;
+  --raised: #20252a;
+  --line: #343a40;
+  --accent: #e06445;
+  --accent-deep: #b94831;
+  --tint: #3a2520;
+  --ink: #f2f0ea;
+  --cool: #b8bec2;
+  --dim: #737b82;
+  --danger: #d46a61;
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: 15px;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+}
+
+.ws {
+  min-height: 100dvh;
+}
+
+.activity {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 56px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  z-index: 5;
+}
+
+.activity:before {
+  content: "DOCOPE";
+  font:
+    600 11px "JetBrains Mono",
+    monospace;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  margin-right: auto;
+}
+
+.ab-item {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  padding: 0 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--cool);
+  text-decoration: none;
+  position: relative;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.ab-item:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.ab-item.on {
+  color: var(--ink);
+  background: var(--tint);
+}
+
+.ab-item.on:after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  background: var(--accent);
+}
+
+.ab-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ab-ic {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1b1613;
+  font:
+    600 12px "JetBrains Mono",
+    monospace;
+  text-transform: uppercase;
+}
+
+.ab-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 3px;
+  object-fit: cover;
+  border: 1px solid var(--accent);
+}
+
+.ab-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+}
+
+.ab-bottom {
+  margin-left: 2px;
+}
+
+.eyelet {
+  display: none;
+}
+
+.home-pane {
+  padding-top: 56px;
+  min-height: 100dvh;
+}
+
+.home-main {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 76px) clamp(20px, 5vw, 72px);
+}
+
+.sec-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px;
+  align-items: end;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+}
+
+.sec-head:before {
+  content: "INDEX  /  01";
+  grid-column: 1/-1;
+  color: var(--accent);
+  font:
+    500 11px "JetBrains Mono",
+    monospace;
+  letter-spacing: 0.12em;
+}
+
+.sec-head h2 {
+  font-size: clamp(1.7rem, 3.6vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.count {
+  color: var(--dim);
+  font:
+    12px/1.6 "JetBrains Mono",
+    monospace;
+  margin: 0;
+}
+
+.count b {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 15px;
+  background: transparent;
+  color: var(--cool);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.btn:hover {
+  border-color: var(--cool);
+  color: var(--ink);
+  background: var(--raised);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1b1613;
+  font-weight: 700;
+}
+
+.btn.primary:hover {
+  background: #ef795a;
+  border-color: #ef795a;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  counter-reset: project;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(180px, 26%);
+  gap: 18px;
+  align-items: center;
+  position: relative;
+  min-height: 112px;
+  padding: 18px 12px 18px 0;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    padding-left 0.18s ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  background: var(--raised);
+  padding-left: 12px;
+  outline: none;
+}
+
+.card:hover:before,
+.card:focus-visible:before {
+  color: var(--accent);
+}
+
+.card:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 3px;
+  border-radius: 1px;
+  background: var(--card-color, var(--line));
+  opacity: 0.9;
+}
+
+.card-top {
+  display: contents;
+}
+
+.proj-icon {
+  grid-column: 2;
+  width: 48px;
+  height: 48px;
+  margin-bottom: -62px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--accent);
+  color: #1b1613;
+  display: grid;
+  place-items: center;
+  font:
+    600 13px "JetBrains Mono",
+    monospace;
+}
+
+.t {
+  grid-column: 2;
+  min-width: 0;
+  padding-left: 60px;
+}
+
+.t h3 {
+  font-size: 1rem;
+  margin: 0 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.path,
+.ph-path {
+  font:
+    11px/1.5 "JetBrains Mono",
+    monospace;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  color: #78c9a5;
+  font: 10px "JetBrains Mono", monospace;
+}
+
+.card-state i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.card-state.bad {
+  color: var(--danger);
+}
+
+.card-desc {
+  grid-column: 3;
+  grid-row: 1;
+  color: var(--cool);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: end;
+  justify-self: end;
+  display: flex;
+  gap: 12px;
+  color: var(--dim);
+  font:
+    10px "JetBrains Mono",
+    monospace;
+}
+
+.card-menu {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+}
+
+.card-menu-btn {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.card-menu-btn:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.more-icon {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.more-icon i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.card-menu-pop {
+  display: none;
+  position: absolute;
+  right: -16px;
+  top: 38px;
+  z-index: 3;
+  width: 80px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: 5px;
+}
+
+.card-menu.open .card-menu-pop {
+  display: grid;
+}
+
+.card-menu-pop button {
+  border: 0;
+  background: transparent;
+  color: var(--cool);
+  text-align: center;
+  border-radius: 3px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.card-menu-pop button:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.card-menu-pop .danger {
+  color: var(--danger);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  min-height: 260px;
+  padding: 40px;
+  border: 1px dashed var(--line);
+  color: var(--cool);
+}
+
+.empty h4 {
+  margin: 14px 0 7px;
+  font-size: 0.95rem;
+}
+
+.empty p {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.82rem;
+}
+
+.em-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font:
+    20px "JetBrains Mono",
+    monospace;
+}
+
+.view-file {
+  display: grid;
+  grid-template-columns: 52px minmax(220px, 280px) minmax(0, 1fr);
+  padding-top: 56px;
+  min-height: 100dvh;
+}
+
+.view-file .activity {
+  width: 52px;
+  height: calc(100dvh - 56px);
+  top: 56px;
+  left: 0;
+  right: auto;
+  bottom: 0;
+  flex-direction: column;
+  padding: 16px 7px;
+  border-top: 0;
+  border-right: 1px solid var(--line);
+}
+
+.view-file .activity:before {
+  display: none;
+}
+
+.view-file .ab-item {
+  width: 48px;
+  padding: 0;
+}
+
+.view-file .ab-bottom {
+  margin-top: auto;
+  margin-left: 0;
+}
+
+.view-file .ab-sep {
+  width: 28px;
+  height: 1px;
+}
+
+.view-file .ab-item.on:after {
+  top: 8px;
+  bottom: 8px;
+  left: -8px;
+  right: auto;
+  width: 3px;
+  height: auto;
+}
+
+.view-file .sidebar {
+  grid-column: 2;
+  height: calc(100dvh - 56px);
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow: auto;
+  padding: 24px 14px;
+}
+
+.sidebar-resizer {
+  grid-column: 3;
+  grid-row: 1;
+  cursor: col-resize;
+  background: var(--line);
+  opacity: 0.4;
+  transition: opacity 0.18s ease, background 0.18s ease;
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer:focus-visible,
+body.resizing .sidebar-resizer {
+  opacity: 1;
+  background: var(--accent);
+  outline: none;
+}
+
+.viewer {
+  grid-column: 3;
+  min-width: 0;
+  min-height: calc(100dvh - 56px);
+  background: var(--canvas);
+  padding: 16px;
+}
+
+.proj-head {
+  padding: 0 8px 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+
+.ph-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.ph-name span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: #1b1613;
+  border-radius: 8px;
+  object-fit: cover;
+  font:
+    600 12px "JetBrains Mono",
+    monospace;
+}
+
+.ph-path {
+  margin: 10px 0 0;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.tree {
+  font-size: 0.78rem;
+}
+
+.tree-tools {
+  margin: 0 0 16px;
+  padding: 12px 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+}
+
+.tree-tools-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: var(--ink);
+  font: 600 10px "JetBrains Mono", monospace;
+  letter-spacing: 0.04em;
+}
+
+.tree-reset {
+  border: 0;
+  background: transparent;
+  color: var(--dim);
+  font: 10px "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+
+.tree-reset:hover {
+  color: var(--accent);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--cool);
+  font-size: 11px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.toggle-row + .toggle-row {
+  margin-top: 8px;
+}
+
+.toggle-row input {
+  accent-color: var(--accent);
+  margin: 2px 0 0;
+}
+
+.toggle-row code {
+  color: var(--ink);
+  font: 10px "JetBrains Mono", monospace;
+}
+
+.tree-row {
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px;
+  padding: 0 7px;
+  border-left: 3px solid transparent;
+  border-radius: 2px;
+  color: var(--cool);
+  cursor: pointer;
+}
+
+.tree-row:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.tree-row.selected {
+  background: var(--tint);
+  border-left-color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tree-row.folder {
+  grid-template-columns: 18px 20px minmax(0, 1fr);
+}
+
+.tw {
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  transition: transform 0.18s ease;
+}
+
+.tw svg,
+.folder-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.folder-icon {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.tree-node.open > .tree-row .tw {
+  transform: rotate(90deg);
+}
+
+.tree-children {
+  padding-left: 12px;
+}
+
+.tname {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ext {
+  font:
+    10px "JetBrains Mono",
+    monospace;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.viewer-tabs {
+  min-height: 52px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 18px;
+}
+
+.vt-file {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  font:
+    12px "JetBrains Mono",
+    monospace;
+}
+
+.vt-file #vtName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+  display: block;
+}
+
+.vt-modes {
+  display: flex;
+  gap: 3px;
+}
+
+.vt-modes button {
+  min-height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--dim);
+  font:
+    11px "JetBrains Mono",
+    monospace;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.vt-modes button:hover,
+.vt-modes button.on {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--tint);
+}
+
+.viewer-body {
+  padding: clamp(18px, 4vw, 44px);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.source,
+.md,
+.img-view,
+.fallback,
+.player-ph {
+  max-width: 860px;
+}
+
+.source pre,
+.md pre {
+  margin: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+  overflow: auto;
+  color: #c0caf5;
+  font:
+    16px/1.8 "JetBrains Mono",
+    monospace;
+}
+
+/* Tokyo Night syntax palette for code tokens. */
+.tok-code { color: #c0caf5; }
+.tok-comment { color: #565f89; }
+.tok-keyword { color: #bb9af7; }
+.tok-type { color: #2ac3de; }
+.tok-string { color: #9ece6a; }
+.tok-number { color: #ff9e64; }
+.tok-function { color: #7aa2f7; }
+.tok-property { color: #73daca; }
+.tok-operator { color: #89ddff; }
+.tok-punctuation { color: #a9b1d6; }
+
+.md-content {
+  color: var(--file-tone, var(--cool));
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+.md-content h1,
+.md-content h2,
+.md-content h3,
+.md-content h4,
+.md-content h5,
+.md-content h6 {
+  color: var(--file-tone, var(--ink));
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  margin: 1.5em 0 0.55em;
+}
+
+.md-content h1 { font-size: 1.85rem; }
+.md-content h2 { font-size: 1.45rem; }
+.md-content h3 { font-size: 1.2rem; }
+.md-content h4,
+.md-content h5,
+.md-content h6 { font-size: 1rem; }
+
+.md-content p,
+.md-content ul,
+.md-content ol,
+.md-content blockquote {
+  margin: 0 0 1em;
+}
+
+.md-content ul,
+.md-content ol {
+  padding-left: 1.5em;
+}
+
+.md-content li + li {
+  margin-top: 0.35em;
+}
+
+.md-content blockquote {
+  padding-left: 14px;
+  border-left: 2px solid var(--file-tone, var(--accent));
+  color: var(--dim);
+}
+
+.md-content hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 1.5em 0;
+}
+
+.md-content a {
+  color: var(--file-tone, var(--accent));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.md-content code {
+  color: var(--file-tone, var(--accent));
+  font: 16px/1.6 "JetBrains Mono", monospace;
+}
+
+.md-content .md-code {
+  margin: 1em 0;
+  color: var(--file-tone, var(--cool));
+}
+
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: 16px;
+}
+
+.md-table th,
+.md-table td {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-table th {
+  color: var(--file-tone, var(--ink));
+  background: color-mix(in srgb, var(--panel) 74%, var(--file-tone, var(--accent)));
+  font-weight: 600;
+}
+
+.md-empty {
+  color: var(--dim);
+}
+
+.img-view,
+.player-ph {
+  padding: 20px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+
+.img-view img {
+  max-height: 70dvh;
+}
+
+.csv-table {
+  border-collapse: collapse;
+  width: 100%;
+  font:
+    12px "JetBrains Mono",
+    monospace;
+}
+
+.csv-table th,
+.csv-table td {
+  border: 1px solid var(--line);
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.csv-table th {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.fallback {
+  text-align: center;
+  padding: 58px 20px;
+  border: 1px dashed var(--line);
+}
+
+.fb-icon {
+  color: var(--accent);
+  font: 22px "JetBrains Mono";
+  margin-bottom: 14px;
+}
+
+.fallback h4 {
+  margin: 0 0 8px;
+}
+
+.fallback p {
+  color: var(--dim);
+  font: 11px "JetBrains Mono";
+  word-break: break-all;
+  margin-bottom: 20px;
+}
+
+.modal-back {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.68);
+  z-index: 10;
+}
+
+.modal-back.on {
+  display: grid;
+}
+
+.modal {
+  width: min(560px, 100%);
+  max-height: 90dvh;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  animation: modal-in 0.18s ease;
+}
+
+.modal-head,
+.modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.modal-head .x {
+  border: 0;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.modal-body {
+  display: grid;
+  gap: 17px;
+  padding: 22px;
+}
+
+.modal-foot {
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+  justify-content: flex-end;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field label {
+  font:
+    600 11px "JetBrains Mono",
+    monospace;
+  color: var(--cool);
+}
+
+.req {
+  color: var(--accent);
+  margin-left: 4px;
+}
+
+.field input[type="text"],
+.field input[type="file"],
+.field textarea,
+.color-custom {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid rgba(224, 100, 69, 0.3);
+  border-color: var(--accent);
+}
+
+.hint {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.mono {
+  font:
+    11px "JetBrains Mono",
+    monospace;
+}
+
+.color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.color-swatch {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  outline: 0;
+  cursor: pointer;
+}
+
+.color-swatch.on {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.icon-upload-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 76px;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: var(--raised);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.icon-upload-box:hover,
+.icon-upload-box:focus-within {
+  border-color: var(--accent);
+  background: var(--tint);
+}
+
+.icon-upload-box input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.icon-upload-preview {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1b1613;
+  font: 24px "JetBrains Mono", monospace;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.icon-upload-preview.has-image {
+  color: transparent;
+}
+
+/* Once an image is selected, let the preview use the whole upload surface
+   instead of keeping it trapped in the small default icon slot. */
+.icon-upload-box.has-image {
+  min-height: 212px;
+  justify-content: center;
+  padding: 15px;
+  overflow: hidden;
+}
+
+.icon-upload-box.has-image .icon-upload-preview {
+  position: relative;
+  inset: auto;
+  width: 180px;
+  height: 180px;
+  flex: 0 0 180px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background-color: var(--panel);
+  background-size: cover;
+}
+
+.icon-upload-box.has-image .icon-upload-copy {
+  display: none;
+}
+
+.icon-upload-box.has-image::after {
+  content: "クリックして画像を変更";
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  padding: 5px 8px;
+  border: 1px solid rgba(242, 240, 234, 0.24);
+  border-radius: 4px;
+  background: rgba(17, 19, 21, 0.78);
+  color: var(--ink);
+  font: 10px "JetBrains Mono", monospace;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .icon-upload-box.has-image {
+    min-height: 184px;
+  }
+
+  .icon-upload-box.has-image .icon-upload-preview {
+    width: 152px;
+    height: 152px;
+    flex-basis: 152px;
+  }
+}
+
+.icon-upload-copy {
+  display: grid;
+  gap: 3px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.icon-upload-copy small {
+  color: var(--dim);
+  font: 10px "JetBrains Mono", monospace;
+}
+
+.color-custom-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-custom {
+  width: 42px;
+  padding: 3px;
+  min-height: 32px;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .activity {
+    padding: 0 12px;
+    overflow: auto;
+  }
+
+  .activity:before {
+    font-size: 10px;
+  }
+
+  .home-main {
+    padding: 34px 16px;
+  }
+
+  .sec-head {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .card {
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 12px;
+    padding: 18px 0;
+  }
+
+  .card-desc,
+  .card-meta {
+    grid-column: 2;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .card-desc {
+    margin-top: 4px;
+  }
+
+  .card-meta {
+    margin-top: 5px;
+  }
+
+  .card:hover,
+  .card:focus-visible {
+    padding-left: 8px;
+  }
+
+  .view-file {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: 56px;
+  }
+
+  .view-file .activity {
+    width: 100%;
+    height: 56px;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    flex-direction: row;
+    padding: 0 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .view-file .activity:before {
+    display: block;
+    margin-right: auto;
+  }
+
+  .view-file .ab-bottom {
+    margin-left: auto;
+    margin-top: 0;
+  }
+
+  .view-file .ab-sep {
+    width: 1px;
+    height: 22px;
+  }
+
+  .view-file .ab-item.on:after {
+    top: auto;
+    bottom: -9px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    height: 3px;
+  }
+
+  .view-file .sidebar,
+  .viewer {
+    grid-column: 1;
+  }
+
+  .view-file .sidebar {
+    height: auto;
+    max-height: 35dvh;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 18px 12px;
+  }
+
+  .viewer {
+    min-height: 65dvh;
+    padding: 10px;
+  }
+
+  .viewer-tabs {
+    padding: 0 12px;
+  }
+
+  .viewer-body {
+    padding: 28px 8px;
+  }
+
+  .modal-head,
+  .modal-body,
+  .modal-foot {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+}
+
+/* Activity rail: keep brand, home, and add controls fixed while projects scroll. */
+.activity {
+  overflow: hidden;
+}
+
+.activity:before {
+  display: none;
+}
+
+.activity-brand,
+.activity-home,
+.activity-footer,
+.activity-projects {
+  flex: 0 0 auto;
+}
+
+.activity-brand {
+  width: 150px;
+  color: var(--ink);
+  font: 600 11px/1.35 "JetBrains Mono", monospace;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  object-fit: contain;
+  background: var(--ink);
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.activity-home,
+.activity-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.activity-projects {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.activity-projects::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.activity-footer {
+  margin-left: auto;
+}
+
+.viewer-tabs {
+  position: relative;
+}
+
+.vt-file[data-copy-path] {
+  cursor: copy;
+  border-radius: 3px;
+  padding: 6px 7px;
+  margin: -6px -7px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.vt-file[data-copy-path]:hover,
+.vt-file[data-copy-path]:focus-visible,
+.vt-file[data-copy-path].copied {
+  outline: none;
+  background: var(--tint);
+  color: var(--ink);
+}
+
+.vt-file[data-copy-path].copied .dot {
+  background: var(--success, #83b8ac);
+}
+
+.copy-state {
+  color: var(--success, #83b8ac);
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+body.view-file {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body.view-file .ws {
+  height: 100dvh;
+  min-height: 0;
+}
+
+body.view-file .activity {
+  width: 72px;
+  height: 100dvh;
+  padding: 12px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+body.view-file .activity-brand {
+  width: 48px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  font-size: 8px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+}
+
+body.view-file .activity-brand .wordmark {
+  display: none;
+}
+
+body.view-file .activity-logo {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+}
+
+body.view-file .activity-home {
+  flex: 0 0 auto;
+}
+
+body.view-file .activity-projects {
+  height: 72px;
+  width: 48px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body.view-file .activity-projects::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+body.view-file .activity-footer {
+  margin: 0;
+  flex-direction: column;
+}
+
+body.view-file .activity-footer .ab-sep {
+  width: 28px;
+  height: 1px;
+}
+
+body.view-file .sidebar,
+body.view-file .viewer {
+  height: 100%;
+  min-height: 0;
+}
+
+body.view-file .sidebar {
+  overflow: auto;
+}
+
+body.view-file .viewer {
+  overflow: auto;
+}
+
+body.view-file .sidebar-resizer {
+  z-index: 2;
+}
+
+@media (max-width: 767px) {
+  .activity {
+    overflow: hidden;
+  }
+
+  .activity-brand {
+    width: 126px;
+    flex-basis: 126px;
+    font-size: 10px;
+  }
+
+  .activity-projects {
+    flex: 1 1 auto;
+  }
+
+  .activity-footer {
+    margin-left: 0;
+  }
+
+  body.view-file {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body.view-file .ws {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  body.view-file .activity {
+    width: 100%;
+    height: 72px;
+    padding: 0 12px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  body.view-file .activity-brand {
+    width: 126px;
+    height: 44px;
+    flex: 0 0 126px;
+    font-size: 10px;
+    text-align: left;
+  }
+
+  body.view-file .activity-projects {
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 2px;
+  }
+
+  body.view-file .activity-footer {
+    margin: 0;
+    flex-direction: row;
+  }
+
+  body.view-file .activity-footer .ab-sep {
+    width: 1px;
+    height: 22px;
+  }
+
+  body.view-file .sidebar {
+    height: var(--sidebar-mobile-height, 35dvh);
+    max-height: none;
+    min-height: 160px;
+    overflow-y: auto;
+  }
+
+  body.view-file .sidebar-resizer {
+    display: grid;
+    grid-column: 1;
+    grid-row: auto;
+    height: 14px;
+    place-items: center;
+    cursor: row-resize;
+    touch-action: none;
+    background: var(--canvas);
+    opacity: 1;
+  }
+
+  body.view-file .sidebar-resizer::after {
+    content: "";
+    width: 42px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
+  body.view-file .viewer {
+    height: auto;
+    min-height: calc(100dvh - 72px - var(--sidebar-mobile-height, 35dvh) - 14px);
+    overflow: visible;
+  }
+}
+
+/* Home controls and visibility settings. */
+.sec-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tree-settings-modal {
+  width: min(620px, 100%);
+}
+
+.tree-settings-modal .modal-head {
+  align-items: flex-start;
+}
+
+.modal-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--accent);
+  font: 500 10px "JetBrains Mono", monospace;
+  letter-spacing: 0.12em;
+}
+
+.settings-lead {
+  max-width: 48ch;
+  color: var(--cool);
+  font-size: 0.86rem;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.settings-options {
+  display: grid;
+  gap: 10px;
+}
+
+.setting-option {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.setting-option:hover,
+.setting-option:focus-within {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--raised) 84%, var(--accent));
+}
+
+.setting-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  color: var(--accent);
+  font: 20px/1 "JetBrains Mono", monospace;
+}
+
+.setting-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.setting-copy b {
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.setting-copy small {
+  color: var(--dim);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.setting-copy code {
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.setting-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.settings-reset {
+  justify-self: start;
+  padding: 0;
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .sec-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .sec-actions .btn {
+    flex: 1 1 150px;
+  }
+
+  .setting-option {
+    grid-template-columns: 34px minmax(0, 1fr) 22px;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .setting-icon {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Layout contract: .ws is the actual grid container; body only selects the mode. */
+body.view-home .ws {
+  display: block;
+  min-height: 100dvh;
+}
+
+body.view-home .sidebar,
+body.view-home .viewer {
+  display: none;
+}
+
+body.view-file .ws {
+  display: grid;
+  grid-template-columns: 52px var(--sidebar-width) 8px minmax(0, 1fr);
+  min-height: 100dvh;
+  padding-top: 56px;
+}
+
+body.view-file {
+  padding-top: 0;
+}
+
+body.view-file {
+  display: block;
+  grid-template-columns: none;
+}
+
+body.view-file .ws {
+  padding-top: 0;
+}
+
+body.view-file .activity {
+  top: 0;
+  height: 100dvh;
+}
+
+body.view-file .sidebar {
+  height: 100dvh;
+}
+
+body.view-file .viewer {
+  min-height: 100dvh;
+}
+
+body.view-file .home-pane {
+  display: none;
+}
+
+body.view-file .sidebar {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+body.view-file .viewer {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.tree-message {
+  margin: 16px 8px;
+  color: var(--dim);
+  font:
+    11px/1.7 "JetBrains Mono",
+    monospace;
+}
+
+.tree-message.error {
+  color: var(--danger);
+}
+
+.tree-message.empty {
+  min-height: 80px;
+  padding: 18px 8px;
+  border: 1px dashed var(--line);
+  text-align: center;
+}
+
+.viewer-message {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 12vh auto 0;
+  padding: 42px 24px;
+  border: 1px dashed var(--line);
+  color: var(--dim);
+  text-align: center;
+}
+
+.viewer-message p {
+  margin: 0;
+  font: 12px/1.7 "JetBrains Mono", monospace;
+}
+
+.viewer-message-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font: 600 18px "JetBrains Mono", monospace;
+}
+
+.viewer-message.error .viewer-message-mark {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.path-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.path-browse {
+  min-width: 64px;
+  padding: 0 12px;
+}
+
+.path-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.75rem;
+}
+
+.path-picker {
+  border: 1px solid var(--line);
+  background: var(--raised);
+  padding: 10px;
+}
+
+.path-picker[hidden] {
+  display: none;
+}
+
+.path-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+
+.path-picker-head span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dim);
+  font:
+    10px "JetBrains Mono",
+    monospace;
+}
+
+.path-picker-head .btn {
+  min-height: 32px;
+  font-size: 0.72rem;
+  padding: 0 9px;
+}
+
+.path-picker-list {
+  display: grid;
+  gap: 2px;
+  padding-top: 8px;
+  max-height: 190px;
+  overflow: auto;
+  color: var(--dim);
+  font:
+    11px "JetBrains Mono",
+    monospace;
+}
+
+.path-picker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.path-picker-name,
+.path-picker-choose {
+  min-height: 34px;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.path-picker-name {
+  background: transparent;
+  color: var(--cool);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.path-picker-name:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.path-picker-choose {
+  padding: 0 8px;
+  background: transparent;
+  color: var(--accent);
+  font:
+    10px "JetBrains Mono",
+    monospace;
+}
+
+.path-picker-choose:hover {
+  background: var(--tint);
+}
+
+.path-input-row,
+.path-picker,
+.path-picker-list,
+.modal {
+  min-width: 0;
+}
+
+.form-error-banner {
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  background: rgba(212, 106, 97, 0.12);
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  .card {
+    grid-template-rows: 1fr auto;
+  }
+
+  .card-desc {
+    grid-row: 1;
+    align-self: start;
+    padding-right: 38px;
+  }
+
+  .card-meta {
+    grid-row: 2;
+    justify-self: start;
+    align-self: end;
+  }
+
+  .card-menu {
+    z-index: 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .ab-item,
+  .view-file .ab-item {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .ab-item img,
+  .ab-ic {
+    width: 44px;
+    height: 44px;
+  }
+
+  .proj-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: -56px;
+  }
+
+  .t {
+    padding-left: 54px;
+  }
+
+  .ph-icon {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .sidebar-resizer {
+    display: none;
+  }
+
+  .icon-upload-preview {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .color-swatch {
+    width: 32px;
+    height: 32px;
+  }
+
+  body.view-file .ws {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: 56px;
+  }
+
+  body.view-file .activity {
+    top: 0;
+    height: 56px;
+  }
+
+  body.view-file .sidebar {
+    height: auto;
+  }
+
+  body.view-file .viewer {
+    min-height: 65dvh;
+  }
+
+  body.view-file .sidebar,
+  body.view-file .viewer {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+/* Final navigation scale overrides. */
+.activity {
+  height: 72px;
+}
+
+.home-pane {
+  padding-top: 72px;
+}
+
+body.view-file .ws {
+  grid-template-columns: 72px var(--sidebar-width) 8px minmax(0, 1fr);
+}
+
+body.view-file .activity {
+  width: 72px;
+  height: 100dvh;
+  top: 0;
+  padding: 16px 12px;
+}
+
+@media (max-width: 767px) {
+  .activity {
+    height: 72px;
+  }
+
+  .home-pane {
+    padding-top: 72px;
+  }
+
+  body.view-file .ws {
+    grid-template-columns: 1fr;
+    padding-top: 72px;
+  }
+
+  body.view-file .activity {
+    width: 100%;
+    height: 72px;
+    padding: 0 12px;
+  }
+}
+
+/* Empty file state on phones: keep the tree usable and remove the unused pane. */
+@media (max-width: 767px) {
+  body.view-file.no-file .viewer {
+    display: none;
+  }
+
+  body.view-file.no-file .sidebar {
+    height: calc(100dvh - 72px - 14px);
+    max-height: calc(100dvh - 72px - 14px);
+  }
+}
+
+/* Home index density: cards use the available width without shifting into the edge. */
+@media (min-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    gap: 14px;
+    min-height: 250px;
+    padding: 20px;
+  }
+
+  .card:hover,
+  .card:focus-visible {
+    padding-left: 20px;
+  }
+
+  .card:after {
+    left: 8px;
+    top: 20px;
+    bottom: 20px;
+  }
+
+  .proj-icon {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+  }
+
+  .t {
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: 0;
+    align-self: center;
+  }
+
+  .card-desc {
+    grid-column: 1 / -1;
+    grid-row: 2 / 4;
+    align-self: start;
+    padding: 0;
+  }
+
+  .card-meta {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    justify-self: start;
+  }
+}
+
+@media (min-width: 1200px) {
+  .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .card {
+    min-height: 0;
+    padding-left: 12px;
+    padding-right: 12px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .card:hover,
+  .card:focus-visible {
+    padding-left: 12px;
+  }
+
+  .card:after {
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+  }
+}
+
+/* Desktop activity rail: reserve the border inside 72px and never shrink its
+   48px controls, so the right edge of the active outline remains intact. */
+@media (min-width: 768px) {
+  body.view-file .activity {
+    width: 72px;
+    min-width: 72px;
+    flex: 0 0 72px;
+    box-sizing: border-box;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.view-file .activity .ab-item {
+    flex: 0 0 48px;
+    width: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Responsive workspace contract: these rules intentionally come last so the
+   mobile splitter owns the tree height instead of the content's intrinsic height. */
+@media (max-width: 767px) {
+  body.view-file .activity::before {
+    display: none;
+    content: none;
+  }
+
+  body.view-file .sidebar {
+    height: var(--sidebar-mobile-height, 35dvh);
+    max-height: none;
+    min-height: 160px;
+    overflow-y: auto;
+  }
+
+  body.view-file .sidebar-resizer {
+    display: grid;
+    grid-column: 1;
+    grid-row: auto;
+    height: 14px;
+    place-items: center;
+    cursor: row-resize;
+    touch-action: none;
+    background: var(--canvas);
+    opacity: 1;
+  }
+
+  body.view-file .sidebar-resizer::after {
+    content: "";
+    width: 42px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
+  body.view-file .viewer {
+    height: auto;
+    min-height: calc(100dvh - 72px - var(--sidebar-mobile-height, 35dvh) - 14px);
+    overflow: visible;
+  }
+
+  body.view-file.no-file .viewer {
+    display: none;
+  }
+
+  body.view-file.no-file .sidebar {
+    height: calc(100dvh - 72px - 14px);
+    max-height: calc(100dvh - 72px - 14px);
+  }
+}
+
+/* Keep page scrolling available without reserving a permanently visible
+   browser scrollbar at the edge of the workspace. */
+html,
+body,
+.sidebar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* The desktop rail and project scroller share the full 72px column; each
+   project control remains a centered, non-shrinking 48px icon. */
+@media (min-width: 768px) {
+  body.view-file .activity-projects {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    width: 72px;
+    min-width: 48px;
+    max-width: 72px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body.view-file .activity-projects .ab-item {
+    flex: 0 0 48px;
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+  }
+}
+
+/* Home navigation contract: keep brand, home, and add controls visible;
+   only the project strip is allowed to scroll horizontally. */
+body.view-home .activity {
+  overflow: hidden;
+}
+
+body.view-home .activity-brand,
+body.view-home .activity-home,
+body.view-home .activity-footer {
+  flex: 0 0 auto;
+}
+
+body.view-home .activity-projects {
+  height: 72px;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  touch-action: pan-x;
+}
+
+body.view-home .activity-footer {
+  margin-left: 0;
+}
+
+/* Project links already have a fixed icon box. Remove the shared activity
+   button padding so the image and its clickable area share the same origin. */
+body.view-home .activity-projects .ab-item,
+body.view-file .activity-projects .ab-item {
+  padding: 0;
+}
+
+/* Keep long dialogs scrollable without showing a persistent browser rail. */
+.modal-back .modal {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-back .modal::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* File view owns the scroll area inside the viewer. Keep scrolling available,
+   but do not reserve a permanent browser-style scrollbar at the far edge. */
+body.view-file .viewer {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body.view-file .viewer::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Markdown uses the same neutral reading color as project names. The file
+   extension tone remains available for navigation metadata, but does not tint
+   the rendered document itself. */
+.md-content,
+.md-content h1,
+.md-content h2,
+.md-content h3,
+.md-content h4,
+.md-content h5,
+.md-content h6,
+.md-content a,
+.md-content code,
+.md-content .md-code,
+.md-table th {
+  color: var(--ink);
+}
+
+.md-content blockquote {
+  border-left-color: var(--line);
+}
+
+.md-table th {
+  background: var(--raised);
+}
+
+/* Code surfaces keep Tokyo Night colors while the horizontal control is
+   promoted to the bottom edge of the viewer. The pre itself remains the
+   scroll target so keyboard, touch, and the bottom rail stay synchronized. */
+.source pre,
+.md pre {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #5b6470 transparent;
+}
+
+.source pre::-webkit-scrollbar,
+.md pre::-webkit-scrollbar {
+  width: 8px;
+  height: 0;
+}
+
+.source pre::-webkit-scrollbar-track,
+.md pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.source pre::-webkit-scrollbar-thumb,
+.md pre::-webkit-scrollbar-thumb {
+  background: #5b6470;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.viewer-scrollbar {
+  position: sticky;
+  z-index: 4;
+  bottom: 10px;
+  display: none;
+  width: fit-content;
+  height: 14px;
+  margin: 0 12px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.22);
+  scrollbar-width: thin;
+  scrollbar-color: #697586 transparent;
+}
+
+.viewer-scrollbar.is-active {
+  display: block;
+}
+
+.viewer-scrollbar > div {
+  width: 0;
+  height: 1px;
+}
+
+.viewer-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 10px;
+}
+
+.viewer-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.viewer-scrollbar::-webkit-scrollbar-thumb {
+  min-width: 44px;
+  background: #697586;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.viewer-scrollbar:hover::-webkit-scrollbar-thumb,
+.viewer-scrollbar:focus-visible::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  background-clip: padding-box;
+}
+
+@media (max-width: 767px) {
+  .viewer-scrollbar {
+    bottom: 8px;
+    margin: 0 8px 8px;
+  }
+}

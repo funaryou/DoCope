@@ -1,33 +1,335 @@
 <!DOCTYPE html>
-<html lang="jp" xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" data-theme="signal-atlas" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${document.name} + ' - Documents Bridge'">ワークスペース</title>
-    <link rel="stylesheet" th:href="@{/css/workspace.css}" href="/css/workspace.css">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/do-cope-logo.svg}" href="/images/do-cope-logo.svg">
+    <title th:text="${document != null ? document.name + ' - DoCope' : 'DoCope'}">DoCope</title>
+    <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026091835)}" href="/css/workspace.css?v=2026091835">
 </head>
-<body>
-    <a href="/">← 一覧に戻る</a>
+<body th:class="${document != null ? 'view-file' : 'view-home'}" data-screen="workspace" data-style="signal-atlas">
 
-    <h1 th:text="${document.name}">プロジェクト名</h1>
-    <p th:text="${document.path}">ルートパス</p>
-
-    <div class="workspace">
-        <div class="sidebar tree">
-            <h2>ツリー</h2>
-            <ul id="tree"></ul>
+<div class="ws">
+    <!-- アクティビティバー（ホーム⇔ファイル閲覧の切替） -->
+    <nav class="activity" aria-label="画面切替">
+        <div class="activity-home">
+            <a class="ab-item" data-view-home th:classappend="${document == null} ? ' on' : ''" th:href="@{/}" href="/" title="ホーム／管理">
+                <span class="eyelet"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+            </a>
         </div>
-        <div class="main">
-            <h2 id="fileName">ファイルを選択してください</h2>
-            <div id="viewer"></div>
+        <div class="ab-sep"></div>
+        <div class="activity-projects" aria-label="プロジェクト一覧">
+            <a th:each="doc : ${documents}"
+               class="ab-item"
+               th:classappend="${document != null and doc.id == document.id} ? ' on' : ''"
+               th:href="@{/workspace/{id}(id=${doc.id})}"
+               th:aria-label="${doc.name}"
+               th:data-proj="${'p-' + doc.id}"
+               th:style="'--sticky-bg:' + (${doc.color} != null ? ${doc.color} : '#e06445')">
+                <span class="eyelet"></span>
+                <img th:if="${doc.icon != null}" th:src="@{/{icon}(icon=${doc.icon})}" alt="icon"
+                     style="border-radius:8px;object-fit:cover;position:relative;z-index:3">
+                <span th:unless="${doc.icon != null}" class="ab-ic" th:text="${#strings.substring(doc.name, 0, 1)}">p</span>
+            </a>
+        </div>
+        <div class="activity-footer">
+            <div class="ab-sep"></div>
+            <button class="ab-item" type="button" data-view-home data-open-modal="register" title="＋追加（新規登録）">
+                <span class="eyelet"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ホーム／管理ビュー（登録プロジェクト一覧） -->
+    <div class="home-pane" id="homePane">
+        <div class="home-main">
+            <div class="sec-head">
+                <div>
+                    <h2>登録プロジェクト</h2>
+                </div>
+                <div class="sec-actions">
+                    <button class="btn" type="button" data-open-modal="tree-settings" data-open-tree-settings aria-haspopup="dialog" aria-controls="modal-tree-settings">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.42 1.42M16.94 16.94l1.42 1.42M5.64 18.36l1.42-1.42M16.94 7.06l1.42-1.42"/><circle cx="12" cy="12" r="3.5"/></svg>
+                        表示設定
+                    </button>
+                    <button class="btn primary" type="button" data-open-modal="register">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        新規登録
+                    </button>
+                </div>
+            </div>
+            <p th:if="${iconError != null}" th:text="${iconError}" style="color:var(--danger);margin-bottom:12px"></p>
+            <p th:if="${pathError != null}" th:text="${pathError}" class="form-error-banner"></p>
+
+            <div class="card-grid">
+                <article th:each="doc : ${documents}" class="card" role="button" tabindex="0"
+                         th:classappend="${!pathAvailability[doc.id]} ? ' unavailable' : ''"
+                         th:data-id="${doc.id}"
+                         th:data-name="${doc.name}"
+                         th:data-path="${doc.path}"
+                         th:data-description="${doc.description}"
+                         th:data-color="${doc.color}"
+                         th:data-icon="${doc.icon}"
+                         th:style="'--card-color:' + (${doc.color} != null ? ${doc.color} : '#e06445') + ';--card-ink:#f2f0ea'"
+                         data-card>
+                    <div class="card-top">
+                        <img th:if="${doc.icon != null}" th:src="@{/{icon}(icon=${doc.icon})}" alt="icon"
+                             class="proj-icon" style="object-fit:cover;padding:0">
+                        <span th:unless="${doc.icon != null}" class="proj-icon"
+                              th:text="${#strings.substring(doc.name, 0, 1)}">p</span>
+                        <div class="t">
+                            <h3 th:text="${doc.name}">プロジェクト名</h3>
+                            <p class="path" th:text="${doc.path}">/path</p>
+                            <span class="card-state" th:if="${pathAvailability[doc.id]}"><i></i>接続可能</span>
+                            <span class="card-state bad" th:unless="${pathAvailability[doc.id]}"><i></i>フォルダ未検出</span>
+                        </div>
+                        <div class="card-menu">
+                            <button class="card-menu-btn" type="button" aria-label="プロジェクトメニュー" aria-haspopup="true"><span class="more-icon"><i></i><i></i><i></i></span></button>
+                            <div class="card-menu-pop" role="menu">
+                                <button type="button" role="menuitem" data-open-modal="edit"
+                                        th:data-id="${doc.id}"
+                                        th:data-name="${doc.name}"
+                                        th:data-path="${doc.path}"
+                                        th:data-description="${doc.description}"
+                                        th:data-color="${doc.color}"
+                                        th:data-icon="${doc.icon}">編集</button>
+                                <button type="button" role="menuitem" data-open-modal="delete" class="danger"
+                                        th:data-id="${doc.id}"
+                                        th:data-name="${doc.name}">削除</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="card-desc" th:text="${doc.description} != null ? ${doc.description} : '説明なし'">説明</p>
+                    <div class="card-meta">
+                        <span th:text="'登録 ' + ${#temporals.format(doc.createdAt, 'yyyy-MM-dd')}">登録日</span>
+                        <span th:text="'更新 ' + ${#temporals.format(doc.updatedAt, 'yyyy-MM-dd')}">更新日</span>
+                    </div>
+                </article>
+            </div>
+            <div th:if="${#lists.isEmpty(documents)}" class="empty">
+                <div class="em-icon" aria-hidden="true">+</div>
+                <h4>プロジェクトが未登録です</h4>
+                <p>「新規登録」からルートディレクトリ（フォルダ）を登録してください。</p>
+            </div>
         </div>
     </div>
 
-    <!-- projectId のみ inline で注入し、ロジック本体は外部JSに分離 -->
-    <script th:inline="javascript">
-        window.WORKSPACE_PROJECT_ID = /*[[${projectId}]]*/ 0;
-    </script>
-    <script th:src="@{/js/preview-config.js}" src="/js/preview-config.js"></script>
-    <script th:src="@{/js/workspace.js}" src="/js/workspace.js"></script>
+    <!-- ファイル閲覧ビュー（サイドバー） -->
+    <aside class="sidebar" id="sidebar">
+        <div class="proj-head">
+            <div class="ph-name">
+                <img th:if="${document != null and document.icon != null}" class="ph-icon" th:src="@{/{icon}(icon=${document.icon})}" alt="プロジェクトアイコン">
+                <span th:unless="${document != null and document.icon != null}" class="ph-icon" th:text="${document != null ? #strings.substring(document.name, 0, 1) : '-'}">-</span>
+                <span id="projName" th:text="${document != null ? document.name : '未選択'}">未選択</span>
+            </div>
+            <div class="ph-path" id="projPath" th:text="${document != null ? document.path : ''}"></div>
+        </div>
+        <div class="tree" id="tree"></div>
+    </aside>
+    <div class="sidebar-resizer" data-sidebar-resizer role="separator" aria-label="フォルダツリーの幅を変更" aria-orientation="vertical" tabindex="0"></div>
+
+    <!-- ファイル閲覧ビュー（メイン・ビューア） -->
+    <main class="viewer">
+        <div class="viewer-tabs">
+            <span class="vt-file" data-copy-path role="button" tabindex="0" title="クリックで相対パスをコピー"><span class="dot"></span><span id="vtName">ファイルを選択してください</span><span class="copy-state" data-copy-state aria-live="polite"></span></span>
+            <span class="vt-modes" id="vtModes" style="display:none">
+                <button class="on" data-mode="render" type="button">描画表示</button>
+                <button data-mode="code" type="button">コード表示</button>
+            </span>
+        </div>
+        <div class="viewer-body" id="viewerBody">
+            <div class="empty"><div class="em-icon" aria-hidden="true">/</div><h4>ファイルを選択してください</h4><p>左のツリーからファイルを選ぶと内容が表示されます。</p></div>
+        </div>
+        <div class="viewer-scrollbar" data-viewer-scrollbar aria-label="コードの横スクロール" aria-hidden="true">
+            <div></div>
+        </div>
+    </main>
+</div>
+
+<!-- フォルダ表示設定モーダル（ホームから開く共通設定） -->
+<div class="modal-back" id="modal-tree-settings">
+    <div class="modal tree-settings-modal" role="dialog" aria-modal="true" aria-labelledby="treeSettingsTitle">
+        <div class="modal-head">
+            <div>
+                <span class="modal-kicker">WORKSPACE / VISIBILITY</span>
+                <h3 id="treeSettingsTitle">フォルダ表示設定</h3>
+            </div>
+            <button class="x" type="button" data-close-modal aria-label="閉じる">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="settings-lead">ファイルツリーに表示する範囲を選択します。設定はこのブラウザに保存され、すべてのプロジェクトに反映されます。</p>
+            <div class="settings-options">
+                <label class="setting-option">
+                    <span class="setting-icon" aria-hidden="true">◌</span>
+                    <span class="setting-copy"><b>隠しフォルダ／ファイル</b><small>ドットから始まる項目を表示します。</small></span>
+                    <input type="checkbox" data-tree-setting="showHidden">
+                </label>
+                <label class="setting-option">
+                    <span class="setting-icon" aria-hidden="true">⌘</span>
+                    <span class="setting-copy"><b><code>.git</code> / <code>.DS_Store</code></b><small>システム用の項目を表示します。初期状態では非表示です。</small></span>
+                    <input type="checkbox" data-tree-setting="showSystem">
+                </label>
+            </div>
+            <button type="button" class="tree-reset settings-reset" data-reset-tree-settings>初期設定に戻す</button>
+        </div>
+        <div class="modal-foot">
+            <button class="btn primary" type="button" data-close-modal>完了</button>
+        </div>
+    </div>
+</div>
+
+<!-- 新規登録モーダル -->
+<div class="modal-back" id="modal-register" th:classappend="${(pathError != null or iconError != null or (registerValidationError != null and registerValidationError)) and document == null} ? ' on' : ''">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="regTitle">
+        <form th:action="@{/register}" method="post" enctype="multipart/form-data" th:object="${documentItem}">
+            <div class="modal-head">
+                <h3 id="regTitle">新しいプロジェクトを登録</h3>
+                <button class="x" type="button" data-close-modal aria-label="閉じる">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-error-banner" th:if="${registerValidationError != null and registerValidationError and iconError == null and pathError == null}">入力内容を確認してください。</p>
+                <p class="form-error-banner" th:if="${iconError != null}" th:text="${iconError}"></p>
+                <div class="field">
+                    <label>プロジェクト名<span class="req">*</span></label>
+                    <input type="text" th:field="*{name}" placeholder="例: sinsakai-zenki-3nen">
+                    <p class="path-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+                    <p class="hint">一覧・ツリー見出しに使う名前。</p>
+                </div>
+                <div class="field">
+                    <label>ルートディレクトリパス<span class="req">*</span></label>
+                    <input type="text" th:field="*{path}" placeholder="/workspace/projects/…" class="mono">
+                    <p class="path-error" th:if="${#fields.hasErrors('path')}" th:errors="*{path}"></p>
+                    <p class="path-error" th:if="${pathError != null}" th:text="${pathError}"></p>
+                    <p class="hint">ファイルではなく<b>実在するフォルダ</b>の絶対パスを入力します。</p>
+                </div>
+                <div class="field">
+                    <label>説明</label>
+                    <textarea th:field="*{description}" placeholder="自由メモ（任意）"></textarea>
+                </div>
+                <div class="field">
+                    <label>プロジェクト識別色</label>
+                    <div class="color-palette" data-field="register-paper">
+                        <button type="button" class="color-swatch on" data-color="#e06445" style="background:#e06445" title="バーミリオン（既定）" aria-label="バーミリオン"></button>
+                        <button type="button" class="color-swatch" data-color="#f2b84b" style="background:#f2b84b" title="アンバー" aria-label="アンバー"></button>
+                        <button type="button" class="color-swatch" data-color="#64b6a8" style="background:#64b6a8" title="シーグラス" aria-label="シーグラス"></button>
+                        <button type="button" class="color-swatch" data-color="#76a9e8" style="background:#76a9e8" title="ブルー" aria-label="ブルー"></button>
+                        <button type="button" class="color-swatch" data-color="#bd8cff" style="background:#bd8cff" title="バイオレット" aria-label="バイオレット"></button>
+                        <button type="button" class="color-swatch" data-color="#ef7eae" style="background:#ef7eae" title="ローズ" aria-label="ローズ"></button>
+                        <button type="button" class="color-swatch" data-color="#86a99a" style="background:#86a99a" title="モス" aria-label="モス"></button>
+                        <button type="button" class="color-swatch" data-color="#d6d9dd" style="background:#d6d9dd" title="シルバー" aria-label="シルバー"></button>
+                    </div>
+                    <div class="color-custom-wrap">
+                        <input type="color" value="#e06445" class="color-custom" aria-label="カスタム色">
+                        <span class="hint" style="margin:0">カスタム色も指定できます</span>
+                    </div>
+                    <input type="hidden" name="color" value="#e06445" data-color-input>
+                    <p class="hint">一覧のマーカーとプロジェクトアイコンに使います。</p>
+                </div>
+                <div class="field">
+                    <label>プロジェクトアイコン</label>
+                    <label class="icon-upload-box" data-icon-upload>
+                        <input type="file" name="iconFile" accept="image/*" data-icon-input>
+                        <span class="icon-upload-preview" data-icon-preview aria-hidden="true">+</span>
+                        <span class="icon-upload-copy"><b>画像をアップロード</b><small>PNG / JPG / GIF・任意</small></span>
+                    </label>
+                    <p class="hint">画像を選ぶとプレビューできます。未指定時は頭文字で表示します。</p>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn" type="button" data-close-modal>キャンセル</button>
+                <button class="btn primary" type="submit">登録する</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal-back" id="modal-edit" th:classappend="${(pathError != null or iconError != null or (editValidationError != null and editValidationError)) and document != null} ? ' on' : ''">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+        <form id="editForm" method="post" enctype="multipart/form-data">
+            <div class="modal-head">
+                <h3 id="editTitle">プロジェクトを編集</h3>
+                <button class="x" type="button" data-close-modal aria-label="閉じる">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-error-banner" th:if="${iconError != null}" th:text="${iconError}"></p>
+                <div class="field">
+                    <label>プロジェクト名<span class="req">*</span></label>
+                    <input type="text" name="name" data-edit-name th:value="${document != null ? document.name : ''}">
+                </div>
+                <div class="field">
+                    <label>ルートディレクトリパス<span class="req">*</span></label>
+                    <input type="text" name="path" class="mono" data-edit-path th:value="${document != null ? document.path : ''}">
+                    <p class="path-error" th:if="${pathError != null}" th:text="${pathError}"></p>
+                    <p class="hint">実在するフォルダの絶対パスを指定してください。</p>
+                </div>
+                <div class="field">
+                    <label>説明</label>
+                    <textarea name="description" data-edit-description th:text="${document != null ? document.description : ''}"></textarea>
+                </div>
+                <div class="field">
+                    <label>プロジェクト識別色</label>
+                    <div class="color-palette" data-field="edit-paper">
+                        <button type="button" class="color-swatch on" data-color="#e06445" style="background:#e06445" title="バーミリオン（既定）" aria-label="バーミリオン"></button>
+                        <button type="button" class="color-swatch" data-color="#f2b84b" style="background:#f2b84b" title="アンバー" aria-label="アンバー"></button>
+                        <button type="button" class="color-swatch" data-color="#64b6a8" style="background:#64b6a8" title="シーグラス" aria-label="シーグラス"></button>
+                        <button type="button" class="color-swatch" data-color="#76a9e8" style="background:#76a9e8" title="ブルー" aria-label="ブルー"></button>
+                        <button type="button" class="color-swatch" data-color="#bd8cff" style="background:#bd8cff" title="バイオレット" aria-label="バイオレット"></button>
+                        <button type="button" class="color-swatch" data-color="#ef7eae" style="background:#ef7eae" title="ローズ" aria-label="ローズ"></button>
+                        <button type="button" class="color-swatch" data-color="#86a99a" style="background:#86a99a" title="モス" aria-label="モス"></button>
+                        <button type="button" class="color-swatch" data-color="#d6d9dd" style="background:#d6d9dd" title="シルバー" aria-label="シルバー"></button>
+                    </div>
+                    <div class="color-custom-wrap">
+                        <input type="color" value="#e06445" class="color-custom" aria-label="カスタム色">
+                        <span class="hint" style="margin:0">カスタム色も指定できます</span>
+                    </div>
+                    <input type="hidden" name="color" value="#e06445" data-color-input>
+                </div>
+                <div class="field">
+                    <label>プロジェクトアイコン</label>
+                    <label class="icon-upload-box" data-icon-upload>
+                        <input type="file" name="iconFile" accept="image/*" data-icon-input>
+                        <span class="icon-upload-preview" data-icon-preview aria-hidden="true">+</span>
+                        <span class="icon-upload-copy"><b>画像をアップロード</b><small>現在の画像は新しい画像で置き換わります</small></span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn" type="button" data-close-modal>キャンセル</button>
+                <button class="btn primary" type="submit">保存する</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 削除確認モーダル -->
+<div class="modal-back" id="modal-delete">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delTitle" style="max-width:420px">
+        <form id="deleteForm" method="post">
+            <div class="modal-head">
+                <h3 id="delTitle">登録を削除しますか？</h3>
+                <button class="x" type="button" data-close-modal aria-label="閉じる">✕</button>
+            </div>
+            <div class="modal-body" style="gap:8px">
+                <p style="font-size:.88rem;line-height:1.8">「<b data-delete-name>プロジェクト</b>」の登録情報を削除します。</p>
+                <p class="hint">ファイルシステム自体は削除されません（登録情報のみ）。この操作は取り消せません。</p>
+            </div>
+            <div class="modal-foot">
+                <button class="btn" type="button" data-close-modal>キャンセル</button>
+                <button class="btn" type="submit" style="background:var(--danger);border-color:var(--danger);color:#fff">削除する</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    window.WORKSPACE_PROJECT_ID = /*[[${projectId}]]*/ null;
+    window.WORKSPACE_VIEW = /*[[${document != null ? 'file' : 'home'}]]*/ 'home';
+</script>
+<script th:src="@{/js/preview-config.js}" src="/js/preview-config.js"></script>
+    <script th:src="@{/js/workspace.js(v=2026091838)}" src="/js/workspace.js?v=2026091838"></script>
+    <script th:src="@{/js/workspace-home.js(v=2026091829)}" src="/js/workspace-home.js?v=2026091829"></script>
 </body>
 </html>

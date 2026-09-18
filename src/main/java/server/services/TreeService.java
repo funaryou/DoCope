@@ -30,7 +30,9 @@ public class TreeService {
 
     public List<TreeNode> listChildren(
         Long projectId,
-        String relativePath
+        String relativePath,
+        boolean showHidden,
+        boolean showSystem
     ) throws IOException {
         DocumentItem item = findItem(projectId);
         Path root = Path.of(item.getPath());
@@ -39,10 +41,15 @@ public class TreeService {
             : FsSecurity.resolve(root, relativePath);
         try(Stream<Path> stream = Files.list(target)) {
             return stream
-                .sorted(Comparator.comparing(p -> p
-                    .getFileName()
-                    .toString()
-                ))
+                // VS Code-style tree order: directories first, then files;
+                // keep alphabetical order within each group.
+                .sorted(
+                    Comparator
+                        .comparing((Path p) -> !Files.isDirectory(p))
+                        .thenComparing(p -> p.getFileName().toString(), String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(p -> p.getFileName().toString())
+                )
+                .filter(p -> isVisible(p.getFileName().toString(), showHidden, showSystem))
                 .map(
                     (p -> new TreeNode(
                         p.getFileName().toString(),
@@ -52,6 +59,12 @@ public class TreeService {
                 )
                 .toList();
         }
+    }
+
+    private boolean isVisible(String name, boolean showHidden, boolean showSystem) {
+        boolean systemEntry = ".git".equals(name) || ".DS_Store".equals(name);
+        if (systemEntry) return showSystem;
+        return showHidden || !name.startsWith(".");
     }
 
     private Path resolveTarget(

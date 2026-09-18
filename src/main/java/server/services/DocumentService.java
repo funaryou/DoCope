@@ -12,10 +12,14 @@ import server.dto.DocumentResponse;
 import server.dto.DocumentUpdateForm;
 import server.entities.DocumentItem;
 import server.exceptions.DocumentNotFoundException;
+import server.exceptions.InvalidDocumentPathException;
 import server.repositories.DocumentRepository;
 import server.validation.IconValidator;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.List;
 
 @Service
@@ -31,6 +35,7 @@ public class DocumentService {
         DocumentCreateForm form,
         MultipartFile iconFile
     ) throws IOException {
+        validateDirectory(form.getPath());
         String iconPath = null;
         if (iconFile != null && !iconFile.isEmpty()) {
             iconValidator.validate(iconFile);
@@ -60,6 +65,17 @@ public class DocumentService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isDirectoryAvailable(String path) {
+        try {
+            return path != null
+                && !path.isBlank()
+                && Files.isDirectory(Path.of(path).toAbsolutePath().normalize());
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
     public DocumentResponse findById(
         Long id
     ) {
@@ -80,7 +96,10 @@ public class DocumentService {
             .orElseThrow(() -> new DocumentNotFoundException(id));
         
         if (form.getName() != null) item.setName(form.getName());
-        if (form.getPath() != null) item.setPath(form.getPath());
+        if (form.getPath() != null) {
+            validateDirectory(form.getPath());
+            item.setPath(form.getPath());
+        }
         if (form.getDescription() != null) item.setDescription(form.getDescription());
         if (form.getColor() != null) item.setColor(form.getColor());
 
@@ -99,6 +118,17 @@ public class DocumentService {
             }
         }
         return DocumentResponse.from(repository.save(item));
+    }
+
+    private void validateDirectory(String path) {
+        try {
+            if (path == null || path.isBlank()
+                || !Files.isDirectory(Path.of(path).toAbsolutePath().normalize())) {
+                throw new InvalidDocumentPathException(path);
+            }
+        } catch (InvalidPathException e) {
+            throw new InvalidDocumentPathException(path);
+        }
     }
 
     @Transactional 

@@ -46,8 +46,22 @@ class DocumentControllerTest {
 
         mvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("index"))
+                .andExpect(view().name("workspace"))
                 .andExpect(model().attributeExists("documents", "documentItem"));
+    }
+
+    @Test
+    void workspaceReturns200WithSelected() throws Exception {
+        DocumentResponse response = new DocumentResponse(
+                1L, "テスト", "/path", "説明", null, "#fff1e6",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(service.findAll()).thenReturn(List.of(response));
+        when(service.findById(1L)).thenReturn(response);
+
+        mvc.perform(get("/workspace/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("workspace"))
+                .andExpect(model().attributeExists("documents", "document", "projectId", "documentItem"));
     }
 
     @Test
@@ -81,7 +95,7 @@ class DocumentControllerTest {
                         .param("name", "テスト")
                         .param("path", "/path"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("index"))
+                .andExpect(view().name("workspace"))
                 .andExpect(model().attributeExists("iconError"));
     }
 }
