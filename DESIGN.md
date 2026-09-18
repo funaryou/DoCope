@@ -1,10 +1,19 @@
-# Design System: Documents Bridge — Signal Atlas
+# Design System: DoCope — Signal Atlas
 
 ## Design premise
 
-Documents Bridge is a local index for developers who keep AI conversation logs, study notes, and implementation documents inside separate project folders. Its job is to make those project roots and their files quickly discoverable in a browser. The required items are: project name, root path, description, dates, project icon, folder tree, file name/path, file contents, and register/edit/delete actions.
+DoCope is a local index for developers who keep AI conversation logs, study notes, and implementation documents inside separate project folders. Its job is to make those project roots and their files quickly discoverable in a browser. The required items are: project name, root path, description, dates, project icon, folder tree, file name/path, file contents, and register/edit/delete actions.
 
 This document intentionally does not inherit visual decisions from previous project documents. It defines a new direction from the functional model only.
+
+## Brand Mark Direction
+
+DoCope's mark is a viewing instrument for documents: a bold scope or telescope lens containing a restrained folded-page silhouette. The circular lens represents `scope`—discovering and inspecting documents—while the page shape keeps the product purpose legible. Prefer a compact geometric symbol that remains recognizable at 24px, with the DoCope wordmark set separately rather than embedded inside the mark.
+
+- **Primary mark:** scope ring + subtle document/page edge
+- **Accent:** Primary Signal Vermilion (`#E06445`)
+- **Support colors:** Deep Charcoal (`#111315`) and Warm Off-White (`#F2F0EA`)
+- **Avoid:** literal star-gazing imagery, planets, generic folder icons, gradients, glossy 3D treatment, and text inside the icon
 
 ## 1. Visual Theme & Atmosphere
 

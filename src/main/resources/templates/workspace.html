@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${document != null ? document.name + ' - Documents Bridge' : 'Documents Bridge'}">Documents Bridge</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/do-cope-logo.svg}" href="/images/do-cope-logo.svg">
+    <title th:text="${document != null ? document.name + ' - DoCope' : 'DoCope'}">DoCope</title>
     <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026091835)}" href="/css/workspace.css?v=2026091835">
 </head>
 <body th:class="${document != null ? 'view-file' : 'view-home'}" data-screen="workspace" data-style="signal-atlas">
@@ -11,7 +12,6 @@
 <div class="ws">
     <!-- アクティビティバー（ホーム⇔ファイル閲覧の切替） -->
     <nav class="activity" aria-label="画面切替">
-        <div class="activity-brand" aria-label="Documents Bridge">DOCUMENTS / BRIDGE</div>
         <div class="activity-home">
             <a class="ab-item" data-view-home th:classappend="${document == null} ? ' on' : ''" th:href="@{/}" href="/" title="ホーム／管理">
                 <span class="eyelet"></span>

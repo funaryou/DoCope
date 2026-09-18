@@ -13,8 +13,8 @@
   const projectId = window.WORKSPACE_PROJECT_ID;
   let currentPath = "";
   let currentFile = null;
-  const stateKey = `documents-bridge:workspace:${projectId}`;
-  const settingsKey = "documents-bridge:tree-settings";
+  const stateKey = `do-cope:workspace:${projectId}`;
+  const settingsKey = "do-cope:tree-settings";
   const defaultTreeSettings = { showHidden: false, showSystem: false };
   const mobileViewport = window.matchMedia("(max-width: 767px)");
   let workspaceState = loadWorkspaceState();
@@ -716,8 +716,8 @@
     const root = document.documentElement;
     const sidebar = document.getElementById("sidebar");
     const mobileQuery = window.matchMedia("(max-width: 767px)");
-    const saved = Number(localStorage.getItem("documents-bridge:sidebar-width"));
-    const savedMobile = Number(localStorage.getItem("documents-bridge:mobile-sidebar-height"));
+    const saved = Number(localStorage.getItem("do-cope:sidebar-width"));
+    const savedMobile = Number(localStorage.getItem("do-cope:mobile-sidebar-height"));
     if (saved >= 220 && saved <= 420) root.style.setProperty("--sidebar-width", saved + "px");
     if (savedMobile >= 160 && savedMobile <= Math.max(260, window.innerHeight - 220)) {
       root.style.setProperty("--sidebar-mobile-height", savedMobile + "px");
@@ -739,7 +739,7 @@
           document.removeEventListener("pointermove", move);
           document.removeEventListener("pointerup", end);
           const height = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-mobile-height"), 10);
-          if (height) localStorage.setItem("documents-bridge:mobile-sidebar-height", String(height));
+          if (height) localStorage.setItem("do-cope:mobile-sidebar-height", String(height));
           document.body.classList.remove("resizing");
         };
         document.body.classList.add("resizing");
@@ -754,7 +754,7 @@
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", end);
         const width = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width"), 10);
-        if (width) localStorage.setItem("documents-bridge:sidebar-width", String(width));
+        if (width) localStorage.setItem("do-cope:sidebar-width", String(width));
         document.body.classList.remove("resizing");
       };
       document.body.classList.add("resizing");
@@ -768,14 +768,14 @@
         event.preventDefault();
         const current = sidebar?.getBoundingClientRect().height || window.innerHeight * 0.35;
         setMobileHeight(current + (event.key === "ArrowDown" ? 16 : -16));
-        localStorage.setItem("documents-bridge:mobile-sidebar-height", getComputedStyle(root).getPropertyValue("--sidebar-mobile-height").trim());
+        localStorage.setItem("do-cope:mobile-sidebar-height", getComputedStyle(root).getPropertyValue("--sidebar-mobile-height").trim());
         return;
       }
       if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       const current = sidebar?.getBoundingClientRect().width || 280;
       setWidth(current + (event.key === "ArrowRight" ? 16 : -16));
-      localStorage.setItem("documents-bridge:sidebar-width", getComputedStyle(root).getPropertyValue("--sidebar-width").trim());
+      localStorage.setItem("do-cope:sidebar-width", getComputedStyle(root).getPropertyValue("--sidebar-width").trim());
     });
   }
 

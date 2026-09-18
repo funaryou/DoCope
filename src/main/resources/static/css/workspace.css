@@ -66,7 +66,7 @@ a {
 }
 
 .activity:before {
-  content: "DOCUMENTS / BRIDGE";
+  content: "DOCOPE";
   font:
     600 11px "JetBrains Mono",
     monospace;
@@ -1407,6 +1407,19 @@ body.resizing .sidebar-resizer {
   font: 600 11px/1.35 "JetBrains Mono", monospace;
   letter-spacing: 0.12em;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  object-fit: contain;
+  background: var(--ink);
+  border-radius: 50%;
+  padding: 4px;
 }
 
 .activity-home,
@@ -1497,6 +1510,16 @@ body.view-file .activity-brand {
   line-height: 1.3;
   text-align: center;
   white-space: normal;
+}
+
+body.view-file .activity-brand .wordmark {
+  display: none;
+}
+
+body.view-file .activity-logo {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
 }
 
 body.view-file .activity-home {

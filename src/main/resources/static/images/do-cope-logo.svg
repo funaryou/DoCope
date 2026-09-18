@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">DoCope</title>
+  <desc id="desc">A document inspected through a precision scope reticle.</desc>
+
+  <!-- Outer Precision Scope Reticle Ring -->
+  <circle cx="256" cy="256" r="180" stroke="#111315" stroke-width="14" stroke-linecap="round" />
+
+  <!-- Calibrated Cardinal Scope Ticks -->
+  <line x1="256" y1="48" x2="256" y2="88" stroke="#E06445" stroke-width="12" stroke-linecap="round" />
+  <line x1="256" y1="424" x2="256" y2="464" stroke="#111315" stroke-width="10" stroke-linecap="round" opacity="0.5" />
+  <line x1="48" y1="256" x2="88" y2="256" stroke="#111315" stroke-width="10" stroke-linecap="round" opacity="0.5" />
+  <line x1="424" y1="256" x2="464" y2="256" stroke="#111315" stroke-width="10" stroke-linecap="round" opacity="0.5" />
+
+  <!-- Secondary Intermediate Optical Aperture Marks -->
+  <line x1="140" y1="140" x2="156" y2="156" stroke="#111315" stroke-width="5" stroke-linecap="round" opacity="0.3" />
+  <line x1="372" y1="140" x2="356" y2="156" stroke="#111315" stroke-width="5" stroke-linecap="round" opacity="0.3" />
+  <line x1="140" y1="372" x2="156" y2="356" stroke="#111315" stroke-width="5" stroke-linecap="round" opacity="0.3" />
+  <line x1="372" y1="372" x2="356" y2="356" stroke="#111315" stroke-width="5" stroke-linecap="round" opacity="0.3" />
+
+  <!-- Interior Dashed Inspection Aperture -->
+  <circle cx="256" cy="256" r="136" stroke="#111315" stroke-width="3.5" stroke-dasharray="8 8" opacity="0.2" />
+
+  <!-- Inspected Folded Document Silhouette -->
+  <path d="M198 152 H282 Q288 152 292 156 L330 194 Q334 198 334 204 V348 Q334 360 322 360 H200 Q188 360 188 348 V164 Q188 152 200 152 Z" fill="#F2F0EA" stroke="#111315" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" />
+  <path d="M284 154 V192 Q284 198 290 198 H328 Z" fill="#E06445" stroke="#111315" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" />
+
+  <!-- Optical Hierarchy Scan Lines and Focal Point -->
+  <circle cx="236" cy="276" r="13" fill="#111315" />
+  <line x1="214" y1="236" x2="306" y2="236" stroke="#111315" stroke-width="9" stroke-linecap="round" />
+  <line x1="264" y1="276" x2="306" y2="276" stroke="#111315" stroke-width="9" stroke-linecap="round" />
+  <line x1="214" y1="316" x2="306" y2="316" stroke="#111315" stroke-width="9" stroke-linecap="round" />
+</svg>
