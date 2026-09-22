@@ -475,6 +475,88 @@
       if (!target || syncing) return;
       target.scrollLeft = rail.scrollLeft;
     }, { passive: true });
+
+    // Let users drag the code surface itself on touch screens and with a
+    // pointer. The vertical gesture remains native; once a gesture is clearly
+    // horizontal, move the active pre instead of requiring the tiny bottom rail.
+    let pointer = null;
+    let viewerScale = 1;
+    let previousPinchDistance = 0;
+
+    const setViewerScale = (scale) => {
+      // Keep the usable range wide enough that a normal pinch does not hit a
+      // visible boundary too early.
+      viewerScale = Math.min(5, Math.max(0.5, scale));
+      body.style.setProperty("--viewer-zoom", String(viewerScale));
+    };
+    body.resetViewerZoom = () => setViewerScale(1);
+    const touchDistance = (touches) => Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+
+    const clearPointer = () => {
+      if (pointer?.target) pointer.target.classList.remove("is-dragging");
+      pointer = null;
+    };
+    body.addEventListener("pointerdown", (event) => {
+      if (!target || event.button > 0) return;
+      const targetElement = event.target.closest?.(".source pre, .md-code");
+      if (targetElement !== target) return;
+      pointer = {
+        id: event.pointerId,
+        target,
+        startX: event.clientX,
+        startY: event.clientY,
+        startScrollLeft: target.scrollLeft,
+        dragging: false
+      };
+    });
+    body.addEventListener("pointermove", (event) => {
+      if (!pointer || event.pointerId !== pointer.id) return;
+      const dx = event.clientX - pointer.startX;
+      const dy = event.clientY - pointer.startY;
+      if (!pointer.dragging) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if (Math.abs(dy) >= Math.abs(dx)) {
+          clearPointer();
+          return;
+        }
+        pointer.dragging = true;
+        pointer.target.classList.add("is-dragging");
+        pointer.target.setPointerCapture?.(pointer.id);
+      }
+      event.preventDefault();
+      pointer.target.scrollLeft = pointer.startScrollLeft - dx;
+    });
+    body.addEventListener("pointerup", clearPointer);
+    body.addEventListener("pointercancel", clearPointer);
+    body.addEventListener("lostpointercapture", clearPointer);
+
+    // Use the touch stream for pinch zoom. Unlike a fixed start-distance
+    // calculation, accumulating each small distance change keeps the zoom
+    // following the fingers even when the browser coalesces/cancels pointer
+    // updates during a long gesture.
+    body.addEventListener("touchstart", (event) => {
+      if (!mobileViewport.matches || event.touches.length !== 2) return;
+      clearPointer();
+      previousPinchDistance = touchDistance(event.touches);
+    }, { passive: true });
+    body.addEventListener("touchmove", (event) => {
+      if (!mobileViewport.matches || event.touches.length < 2 || previousPinchDistance <= 0) return;
+      event.preventDefault();
+      const distance = touchDistance(event.touches);
+      if (!distance) return;
+      const distanceRatio = distance / previousPinchDistance;
+      previousPinchDistance = distance;
+      setViewerScale(viewerScale * Math.pow(distanceRatio, 1.35));
+    }, { passive: false });
+    const endPinch = (event) => {
+      if (event.touches.length < 2) previousPinchDistance = 0;
+    };
+    body.addEventListener("touchend", endPinch, { passive: true });
+    body.addEventListener("touchcancel", endPinch, { passive: true });
+
     viewer.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
@@ -570,6 +652,7 @@
     if (vtName) vtName.textContent = relPath;
     const body = document.getElementById("viewerBody");
     if (!body) return;
+    body.resetViewerZoom?.();
     setFileTone(body, ext);
     currentFile = { path: relPath, ext };
     workspaceState.file = relPath;

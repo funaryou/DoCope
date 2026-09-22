@@ -2,7 +2,9 @@
 <html lang="ja" data-theme="signal-atlas" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Disable browser page zoom so the file viewer's mobile pinch zoom does
+         not compete with the in-app zoom gesture. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#111315">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,7 +13,7 @@
     <link rel="apple-touch-icon" th:href="@{/images/do-cope-logo.png}" href="/images/do-cope-logo.png">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/do-cope-logo.svg}" href="/images/do-cope-logo.svg">
     <title th:text="${document != null ? document.name + ' - DoCope' : 'DoCope'}">DoCope</title>
-    <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026092301)}" href="/css/workspace.css?v=2026092301">
+    <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026092302)}" href="/css/workspace.css?v=2026092302">
 </head>
 <body th:class="${document != null ? 'view-file' : 'view-home'}" data-screen="workspace" data-style="signal-atlas">
 
