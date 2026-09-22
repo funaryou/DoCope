@@ -2510,7 +2510,7 @@ body.view-file .viewer::-webkit-scrollbar {
    scroll target so keyboard, touch, and the bottom rail stay synchronized. */
 .source pre,
 .md pre {
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #5b6470 transparent;
@@ -2520,6 +2520,20 @@ body.view-file .viewer::-webkit-scrollbar {
 .md pre::-webkit-scrollbar {
   width: 8px;
   height: 0;
+}
+
+/* The horizontal position is controlled by the viewer rail on desktop, but
+   keep the native scroll surface available for touch and pointer dragging. */
+.source pre,
+.md pre {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.source pre.is-dragging,
+.md pre.is-dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .source pre::-webkit-scrollbar-track,
@@ -2586,8 +2600,16 @@ body.view-file .viewer::-webkit-scrollbar {
 }
 
 @media (max-width: 767px) {
-  .viewer-scrollbar {
-    bottom: 8px;
-    margin: 0 8px 8px;
+  /* Keep the zoom inside the file pane so the surrounding tree and header do
+     not resize with the document. CSS zoom also expands the scrollable area. */
+  .viewer-body > * {
+    zoom: var(--viewer-zoom, 1);
+  }
+
+  /* On a phone the whole code surface is the horizontal scroll affordance.
+     The narrow desktop rail is both redundant and difficult to operate. */
+  .viewer-scrollbar,
+  .viewer-scrollbar.is-active {
+    display: none;
   }
 }
