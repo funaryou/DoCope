@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111315">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="DoCope">
+    <link rel="manifest" th:href="@{/manifest.webmanifest}" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" th:href="@{/images/do-cope-logo.png}" href="/images/do-cope-logo.png">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/do-cope-logo.svg}" href="/images/do-cope-logo.svg">
     <title th:text="${document != null ? document.name + ' - DoCope' : 'DoCope'}">DoCope</title>
     <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026092301)}" href="/css/workspace.css?v=2026092301">

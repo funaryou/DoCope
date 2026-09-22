@@ -1,0 +1,31 @@
+{
+  "name": "DoCope - ローカルドキュメントワークスペース",
+  "short_name": "DoCope",
+  "description": "ローカルに分散した開発プロジェクトやドキュメントを確認するためのワークスペースです。",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "lang": "ja",
+  "dir": "ltr",
+  "theme_color": "#111315",
+  "background_color": "#111315",
+  "categories": ["productivity", "developer", "utilities"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/images/do-cope-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/do-cope-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
