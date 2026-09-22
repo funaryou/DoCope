@@ -2340,6 +2340,47 @@ body.view-file .activity {
     height: calc(100dvh - 72px - 14px);
     max-height: calc(100dvh - 72px - 14px);
   }
+
+  /* On phones the workspace itself stays within the viewport. The tree keeps
+     its resized height at the top, while only the file viewer owns scrolling.
+     This prevents the tree section from moving away with the document. */
+  body.view-file {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.view-file .ws {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: var(--sidebar-mobile-height, 35dvh) 14px minmax(0, 1fr);
+  }
+
+  body.view-file .sidebar,
+  body.view-file .sidebar-resizer,
+  body.view-file .viewer {
+    position: static;
+  }
+
+  body.view-file .viewer {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* There is no file-viewer pane to resize until a file is selected. */
+  body.view-file.no-file .ws {
+    grid-template-rows: calc(100dvh - 72px) 0 minmax(0, 1fr);
+  }
+
+  body.view-file.no-file .sidebar {
+    height: calc(100dvh - 72px);
+    max-height: calc(100dvh - 72px);
+  }
+
+  body.view-file.no-file .sidebar-resizer {
+    display: none;
+  }
 }
 
 /* Keep page scrolling available without reserving a permanently visible
