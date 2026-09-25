@@ -10,6 +10,18 @@ DoCope は、ローカルに分散している開発プロジェクトやドキ�
 
 アプリを作った意図や設計上の考え方については、[プロジェクトの思想と設計方針](docs/PROJECT_VISION.md) にまとめています。
 
+## プレビュー
+
+実際の操作イメージは、以下の動画で確認できます。
+
+### Mobile
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/-KgeKK04afE?si=PfRKH4E1AaYN1xO5" title="DoCope Mobile preview" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+### PC
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Fz2FUJREyoY?si=7SCRhCGwtOPaBrvR" title="DoCope PC preview" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## 現在できること
 
 - ローカルのプロジェクトフォルダを登録・編集・削除
@@ -53,4 +65,3 @@ DoCope は、ローカルに分散している開発プロジェクトやドキ�
 - Spring Data JPA
 - SQLite
 - JavaScript / CSS
-
