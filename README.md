@@ -16,11 +16,11 @@ DoCope は、ローカルに分散している開発プロジェクトやドキ�
 
 ### Mobile
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/-KgeKK04afE?si=PfRKH4E1AaYN1xO5" title="DoCope Mobile preview" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![DoCope Mobile preview](https://img.youtube.com/vi/-KgeKK04afE/hqdefault.jpg)](https://www.youtube.com/watch?v=-KgeKK04afE)
 
 ### PC
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Fz2FUJREyoY?si=7SCRhCGwtOPaBrvR" title="DoCope PC preview" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![DoCope PC preview](https://img.youtube.com/vi/Fz2FUJREyoY/hqdefault.jpg)](https://www.youtube.com/watch?v=Fz2FUJREyoY)
 
 ## 現在できること
 
