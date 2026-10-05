@@ -3,6 +3,7 @@ package server.services;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -96,6 +97,34 @@ public class TreeService {
         String relativePath
     ) throws IOException {
         Path target = resolveTarget(projectId, relativePath);
-        return new FileData(Files.readAllBytes(target), Files.probeContentType(target));
+        return new FileData(Files.readAllBytes(target), contentType(target));
+    }
+
+    private String contentType(Path target) throws IOException {
+        String name = target.getFileName().toString().toLowerCase(Locale.ROOT);
+        int dot = name.lastIndexOf('.');
+        String ext = dot >= 0 ? name.substring(dot + 1) : "";
+        String known = switch (ext) {
+            case "svg" -> "image/svg+xml";
+            case "png" -> "image/png";
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "gif" -> "image/gif";
+            case "webp" -> "image/webp";
+            case "ico" -> "image/x-icon";
+            case "mp4" -> "video/mp4";
+            case "webm" -> "video/webm";
+            case "mov" -> "video/quicktime";
+            case "mp3" -> "audio/mpeg";
+            case "wav" -> "audio/wav";
+            case "ogg" -> "audio/ogg";
+            case "m4a" -> "audio/mp4";
+            case "pdf" -> "application/pdf";
+            default -> null;
+        };
+        if (known != null) return known;
+        String detected = Files.probeContentType(target);
+        return detected != null && !detected.isBlank()
+            ? detected
+            : "application/octet-stream";
     }
 }

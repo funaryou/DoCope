@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" th:href="@{/images/do-cope-logo.png}" href="/images/do-cope-logo.png">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/do-cope-logo.svg}" href="/images/do-cope-logo.svg">
     <title th:text="${document != null ? document.name + ' - DoCope' : 'DoCope'}">DoCope</title>
-    <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026092302)}" href="/css/workspace.css?v=2026092302">
+    <link rel="stylesheet" th:href="@{/css/workspace.css(v=2026100202)}" href="/css/workspace.css?v=2026100202">
 </head>
 <body th:class="${document != null ? 'view-file' : 'view-home'}" data-screen="workspace" data-style="signal-atlas">
 
@@ -337,7 +337,7 @@
     window.WORKSPACE_VIEW = /*[[${document != null ? 'file' : 'home'}]]*/ 'home';
 </script>
 <script th:src="@{/js/preview-config.js}" src="/js/preview-config.js"></script>
-    <script th:src="@{/js/workspace.js(v=2026091838)}" src="/js/workspace.js?v=2026091838"></script>
+    <script th:src="@{/js/workspace.js(v=2026100202)}" src="/js/workspace.js?v=2026100202"></script>
     <script th:src="@{/js/workspace-home.js(v=2026091829)}" src="/js/workspace-home.js?v=2026091829"></script>
 </body>
 </html>

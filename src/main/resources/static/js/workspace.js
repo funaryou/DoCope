@@ -162,7 +162,8 @@
   }
 
   function sourceCodeHtml(text, ext) {
-    return '<pre><code class="tok-code">' + syntaxHighlight(text, ext) + "</code></pre>";
+    return '<pre><code class="tok-code">' + syntaxHighlight(text, ext)
+      + '</code><button type="button" class="code-copy-button" aria-label="コードをコピー">コピー</button></pre>';
   }
 
   function normalizeSyntaxExt(language) {
@@ -186,7 +187,61 @@
     return html;
   }
 
-  function markdownHtml(text) {
+  function mediaUrl(value, basePath) {
+    const source = String(value || "").trim();
+    if (/^(?:https?:|data:|blob:)/i.test(source)) return source;
+    const base = basePath ? basePath.split("/").slice(0, -1) : [];
+    const resolved = [];
+    for (const part of base.concat(source.replace(/^\.\//, "").split("/"))) {
+      if (!part || part === ".") continue;
+      if (part === "..") resolved.pop(); else resolved.push(part);
+    }
+    return `/file/${projectId}?path=${encodeURIComponent(resolved.join("/"))}`;
+  }
+
+  function safeExternalUrl(value) {
+    const source = String(value || "").trim();
+    return /^https?:\/\//i.test(source) ? source : "";
+  }
+
+  function markdownMediaHtml(value, basePath) {
+    const images = [];
+    const withoutImages = String(value).replace(/!\[([^\]]*)\]\(([^\s)]+)(?:\s+["']([^"']*)["'])?\)/g,
+      (_, alt, source, title) => {
+        images.push('<img class="md-media" src="' + escapeHtml(mediaUrl(source, basePath))
+          + '" alt="' + escapeHtml(alt) + '"' + (title ? ' title="' + escapeHtml(title) + '"' : '') + '>');
+        return `\u0000MD_IMAGE_${images.length - 1}\u0000`;
+      });
+    return inlineMarkdown(withoutImages).replace(/\u0000MD_IMAGE_(\d+)\u0000/g,
+      (_, index) => images[Number(index)]);
+  }
+
+  function rawEmbedHtml(line, basePath) {
+    const iframe = /^\s*<iframe\b([^>]*)>\s*<\/iframe>\s*$/i.exec(line);
+    if (iframe) {
+      const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(iframe[1]);
+      const url = src && safeExternalUrl(src[1]);
+      if (!url) return "";
+      const width = /\bwidth\s*=\s*["']([^"']+)["']/i.exec(iframe[1]);
+      const height = /\bheight\s*=\s*["']([^"']+)["']/i.exec(iframe[1]);
+      return '<div class="md-embed"><iframe src="' + escapeHtml(url)
+        + '" title="埋め込みコンテンツ" loading="lazy" referrerpolicy="no-referrer-when-downgrade"'
+        + (width ? ' width="' + escapeHtml(width[1]) + '"' : '')
+        + (height ? ' height="' + escapeHtml(height[1]) + '"' : '')
+        + ' allowfullscreen></iframe></div>';
+    }
+    const image = /^\s*<img\b([^>]*)\/?\>\s*$/i.exec(line);
+    if (image) {
+      const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(image[1]);
+      if (!src) return "";
+      const alt = /\balt\s*=\s*["']([^"']*)["']/i.exec(image[1]);
+      return '<img class="md-media" src="' + escapeHtml(mediaUrl(src[1], basePath))
+        + '" alt="' + escapeHtml(alt ? alt[1] : "") + '">';
+    }
+    return "";
+  }
+
+  function markdownHtml(text, basePath) {
     const lines = String(text || "").replace(/\r/g, "").split("\n");
     const out = [];
     let paragraph = [];
@@ -197,7 +252,7 @@
 
     const closeParagraph = () => {
       if (!paragraph.length) return;
-      out.push("<p>" + inlineMarkdown(paragraph.join("\n")).replace(/\n/g, "<br>") + "</p>");
+      out.push("<p>" + markdownMediaHtml(paragraph.join("\n"), basePath).replace(/\n/g, "<br>") + "</p>");
       paragraph = [];
     };
     const closeList = () => {
@@ -208,7 +263,7 @@
       if (!inCode) return;
       out.push('<pre class="md-code"><code class="tok-code">'
         + syntaxHighlight(codeLines.join("\n"), normalizeSyntaxExt(codeLanguage))
-        + "</code></pre>");
+        + '</code><button type="button" class="code-copy-button" aria-label="コードをコピー">コピー</button></pre>');
       codeLines = [];
       codeLanguage = "";
       inCode = false;
@@ -232,6 +287,10 @@
       if (inCode) {
         codeLines.push(line);
         continue;
+      }
+      const embed = rawEmbedHtml(line, basePath);
+      if (embed) {
+        closeParagraph(); closeList(); out.push(embed); continue;
       }
       const heading = /^(#{1,6})\s+(.+)$/.exec(line);
       const unordered = /^\s*[-*+]\s+(.+)$/.exec(line);
@@ -486,14 +545,34 @@
     const setViewerScale = (scale) => {
       // Keep the usable range wide enough that a normal pinch does not hit a
       // visible boundary too early.
-      viewerScale = Math.min(5, Math.max(0.5, scale));
+      viewerScale = Math.min(10, Math.max(0.002, scale));
       body.style.setProperty("--viewer-zoom", String(viewerScale));
+      // Apply the value directly as well as through the mobile CSS rule. This
+      // keeps wheel zoom reliable when the viewport is emulated by a browser.
+      body.querySelectorAll(":scope > *").forEach((content) => {
+        content.style.zoom = String(viewerScale);
+      });
     };
     body.resetViewerZoom = () => setViewerScale(1);
     const touchDistance = (touches) => Math.hypot(
       touches[0].clientX - touches[1].clientX,
       touches[0].clientY - touches[1].clientY
     );
+
+    // Command (macOS) or Control (Windows/Linux) + wheel zooms the file view.
+    // Shift + wheel remains available for the browser's normal horizontal
+    // scrolling behavior.
+    body.addEventListener("wheel", (event) => {
+      if (!event.metaKey && !event.ctrlKey) return;
+      event.preventDefault();
+      // Some browsers remap Shift + wheel from deltaY to deltaX.
+      const rawDelta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX;
+      if (!rawDelta) return;
+      const delta = event.deltaMode === 1 ? rawDelta * 16 : rawDelta;
+      setViewerScale(viewerScale * Math.exp(-delta * 0.004));
+    }, { passive: false, capture: true });
 
     const clearPointer = () => {
       if (pointer?.target) pointer.target.classList.remove("is-dragging");
@@ -567,6 +646,53 @@
   }
 
   let copyFeedbackTimer = null;
+  let codeCopyFeedbackTimer = null;
+
+  async function copyCodeBlock(button) {
+    const code = button.closest("pre")?.querySelector("code");
+    if (!code) return;
+
+    let copied = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code.textContent);
+        copied = true;
+      }
+    } catch (_) {
+      // execCommand のフォールバックを試す。
+    }
+
+    if (!copied) {
+      const helper = document.createElement("textarea");
+      helper.value = code.textContent;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.appendChild(helper);
+      helper.select();
+      try {
+        copied = document.execCommand("copy");
+      } catch (_) {
+        copied = false;
+      }
+      helper.remove();
+    }
+
+    button.classList.toggle("copied", copied);
+    button.textContent = copied ? "コピー済み" : "コピー失敗";
+    button.setAttribute("aria-label", copied ? "コードをコピーしました" : "コードのコピーに失敗しました");
+    clearTimeout(codeCopyFeedbackTimer);
+    codeCopyFeedbackTimer = setTimeout(() => {
+      button.classList.remove("copied");
+      button.textContent = "コピー";
+      button.setAttribute("aria-label", "コードをコピー");
+    }, 1800);
+  }
+
+  document.getElementById("viewerBody")?.addEventListener("click", (event) => {
+    const button = event.target.closest(".code-copy-button");
+    if (button) copyCodeBlock(button);
+  });
 
   async function copyCurrentPath() {
     const path = currentFile?.path;
@@ -660,7 +786,8 @@
     saveWorkspaceState();
     showViewerMessage("ファイルを読み込んでいます…");
 
-    // SVG: 描画／コードの切替（ユーザー指示。設計書の同時表示から変更）
+    // SVG must be handled before TEXT_EXTS: it is source code too, but the
+    // primary preview should be the rendered vector image.
     if (ext === SVG_EXT) {
       const [fileRes, codeRes] = await Promise.all([
         fetch(`/file/${projectId}?path=${encodeURIComponent(relPath)}`),
@@ -681,7 +808,7 @@
       const res = await fetch(`/content/${projectId}?path=${encodeURIComponent(relPath)}`);
       const text = await res.text();
       body.innerHTML =
-        '<div data-render><div class="md md-content">' + markdownHtml(text) + "</div></div>"
+        '<div data-render><div class="md md-content">' + markdownHtml(text, relPath) + "</div></div>"
         + '<div data-code hidden><div class="source">'
         + sourceCodeHtml(text, ext) + "</div></div>";
       setModes(["render", "code"]);
@@ -732,6 +859,21 @@
         + '" controls></audio></div></div>';
       setModes(["render"]);
       return;
+    }
+
+    // Unknown extensions may still be ordinary text files. Try the text
+    // endpoint before treating the file as a download-only binary.
+    try {
+      const res = await fetch(`/content/${projectId}?path=${encodeURIComponent(relPath)}`);
+      if (res.ok) {
+        const text = await res.text();
+        body.innerHTML = '<div data-render><div class="source">'
+          + sourceCodeHtml(text, ext) + "</div></div>";
+        setModes(["render"]);
+        return;
+      }
+    } catch (error) {
+      // Keep the download fallback for binary files and unavailable content.
     }
 
     body.innerHTML = '<div data-render>'
@@ -799,14 +941,16 @@
     const root = document.documentElement;
     const sidebar = document.getElementById("sidebar");
     const mobileQuery = window.matchMedia("(max-width: 767px)");
-    const saved = Number(localStorage.getItem("do-cope:sidebar-width"));
-    const savedMobile = Number(localStorage.getItem("do-cope:mobile-sidebar-height"));
-    if (saved >= 220 && saved <= 420) root.style.setProperty("--sidebar-width", saved + "px");
-    if (savedMobile >= 160 && savedMobile <= Math.max(260, window.innerHeight - 220)) {
+    const savedValue = localStorage.getItem("do-cope:sidebar-width");
+    const saved = Number(savedValue);
+    const savedMobileValue = localStorage.getItem("do-cope:mobile-sidebar-height");
+    const savedMobile = Number(savedMobileValue);
+    if (savedValue !== null && saved >= 0 && saved <= 420) root.style.setProperty("--sidebar-width", saved + "px");
+    if (savedMobileValue !== null && savedMobile >= 0 && savedMobile <= Math.max(260, window.innerHeight - 220)) {
       root.style.setProperty("--sidebar-mobile-height", savedMobile + "px");
     }
-    const setWidth = (width) => root.style.setProperty("--sidebar-width", Math.max(220, Math.min(420, width)) + "px");
-    const mobileBounds = () => ({ min: 160, max: Math.max(260, window.innerHeight - 220) });
+    const setWidth = (width) => root.style.setProperty("--sidebar-width", Math.max(0, Math.min(420, width)) + "px");
+    const mobileBounds = () => ({ min: 0, max: Math.max(260, window.innerHeight - 220) });
     const setMobileHeight = (height) => {
       const bounds = mobileBounds();
       root.style.setProperty("--sidebar-mobile-height", Math.max(bounds.min, Math.min(bounds.max, height)) + "px");
@@ -837,7 +981,7 @@
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", end);
         const width = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width"), 10);
-        if (width) localStorage.setItem("do-cope:sidebar-width", String(width));
+          if (Number.isFinite(width)) localStorage.setItem("do-cope:sidebar-width", String(width));
         document.body.classList.remove("resizing");
       };
       document.body.classList.add("resizing");
