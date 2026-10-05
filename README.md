@@ -16,12 +16,11 @@ DoCope は、ローカルに分散している開発プロジェクトやドキ�
 
 ### Mobile
 
-[![DoCope Mobile preview](https://yt-embed.live/embed?v=-KgeKK04afE)](https://www.youtube.com/watch?v=-KgeKK04afE)
+[![DoCope Mobile preview](https://img.youtube.com/vi/-KgeKK04afE/hqdefault.jpg)](https://www.youtube.com/watch?v=-KgeKK04afE)
 
 ### PC
 
-[![DoCope PC preview](https://yt-embed.live/embed?v=Fz2FUJREyoY)](https://www.youtube.com/watch?v=Fz2FUJREyoY)
-
+[![DoCope PC preview](https://img.youtube.com/vi/Fz2FUJREyoY/hqdefault.jpg)](https://www.youtube.com/watch?v=Fz2FUJREyoY)
 ## 現在できること
 
 - ローカルのプロジェクトフォルダを登録・編集・削除
