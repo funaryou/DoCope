@@ -162,8 +162,8 @@
   }
 
   function sourceCodeHtml(text, ext) {
-    return '<pre><code class="tok-code">' + syntaxHighlight(text, ext)
-      + '</code><button type="button" class="code-copy-button" aria-label="コードをコピー">コピー</button></pre>';
+    return '<div class="code-block"><button type="button" class="code-copy-button" aria-label="コードをコピー">コピー</button><div class="code-scroll"><pre><code class="tok-code">'
+      + syntaxHighlight(text, ext) + '</code></pre></div></div>';
   }
 
   function normalizeSyntaxExt(language) {
@@ -261,9 +261,8 @@
     };
     const closeCode = () => {
       if (!inCode) return;
-      out.push('<pre class="md-code"><code class="tok-code">'
-        + syntaxHighlight(codeLines.join("\n"), normalizeSyntaxExt(codeLanguage))
-        + '</code><button type="button" class="code-copy-button" aria-label="コードをコピー">コピー</button></pre>');
+      out.push('<div class="code-block md-code"><button type="button" class="code-copy-button" aria-label="コードをコピー">コピー</button><div class="code-scroll"><pre><code class="tok-code">'
+        + syntaxHighlight(codeLines.join("\n"), normalizeSyntaxExt(codeLanguage)) + '</code></pre></div></div>');
       codeLines = [];
       codeLanguage = "";
       inCode = false;
@@ -453,6 +452,7 @@
   function renderMode(mode) {
     document.querySelectorAll("#vtModes button").forEach(function (b) {
       b.classList.toggle("on", b.dataset.mode === mode);
+      b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false");
     });
     const body = document.getElementById("viewerBody");
     if (!body) return;
@@ -469,19 +469,53 @@
     const viewer = document.querySelector(".viewer");
     const body = document.getElementById("viewerBody");
     const rail = document.querySelector("[data-viewer-scrollbar]");
-    const railContent = rail?.firstElementChild;
-    if (!viewer || !body || !rail || !railContent) return;
+    const track = rail?.querySelector(".viewer-scrollbar-track");
+    const map = rail?.querySelector("[data-viewer-scrollbar-map]");
+    const thumb = rail?.querySelector("[data-viewer-scrollbar-thumb]");
+    if (!viewer || !body || !rail || !track || !map || !thumb) return;
 
     let target = null;
     let frame = 0;
-    let syncing = false;
+
+    const drawMiniMap = (element) => {
+      const width = Math.max(1, Math.floor(track.clientWidth));
+      const height = Math.max(1, Math.floor(track.clientHeight));
+      const ratio = window.devicePixelRatio || 1;
+      map.width = Math.floor(width * ratio);
+      map.height = Math.floor(height * ratio);
+      const context = map.getContext("2d");
+      if (!context) return;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.clearRect(0, 0, width, height);
+      const lines = (element.textContent || "").split(/\r?\n/);
+      const visibleLines = lines.filter((line) => line.trim().length > 0);
+      if (!visibleLines.length) return;
+      const maxLength = Math.max(1, ...visibleLines.map((line) => line.length));
+      const rowHeight = Math.max(1, height / Math.min(visibleLines.length, 160));
+      const palette = ["#687489", "#7e8999", "#9a8069", "#718c84", "#8b7d9d"];
+      visibleLines.slice(0, 160).forEach((line, index) => {
+        const y = Math.floor(index * rowHeight);
+        const lineWidth = Math.max(2, Math.round((line.length / maxLength) * (width - 3)));
+        let x = 1;
+        const chunks = Math.max(1, Math.min(10, Math.ceil(line.length / 18)));
+        for (let chunk = 0; chunk < chunks; chunk += 1) {
+          const chunkWidth = Math.max(1, Math.round(lineWidth / chunks) - 1);
+          context.fillStyle = palette[(index + chunk) % palette.length];
+          context.globalAlpha = line.trimStart().startsWith("//") ? 0.38 : 0.68;
+          context.fillRect(x, y, Math.min(chunkWidth, width - x), Math.max(1, Math.ceil(rowHeight) - 1));
+          x += chunkWidth + 1;
+          if (x >= width) break;
+        }
+      });
+      context.globalAlpha = 1;
+    };
 
     const visible = (element) => element.getClientRects().length > 0
       && element.clientWidth > 0
       && element.scrollWidth > element.clientWidth + 1;
 
     const selectTarget = () => {
-      const candidates = [...body.querySelectorAll(".source pre, .md-code")].filter(visible);
+      const candidates = [...body.querySelectorAll(".code-scroll")].filter(visible);
       if (!candidates.length) return null;
       const viewerRect = viewer.getBoundingClientRect();
       return candidates.find((candidate) => {
@@ -501,28 +535,35 @@
       frame = 0;
       const next = selectTarget();
       attachTarget(next);
+      const viewerRect = viewer.getBoundingClientRect();
+      // Keep the scrubber pinned to the viewport while matching the visible
+      // FileView column, including when the window or sidebar is resized.
+      rail.style.left = viewerRect.left + "px";
+      rail.style.width = viewerRect.width + "px";
+      rail.style.right = "auto";
+      drawMiniMap(target || body);
       if (!target) {
-        rail.classList.remove("is-active");
-        rail.setAttribute("aria-hidden", "true");
-        rail.style.width = "";
-        rail.style.marginLeft = "";
+        rail.classList.remove("has-target");
+        rail.setAttribute("aria-hidden", "false");
+        thumb.style.width = "100%";
+        thumb.style.transform = "none";
         return;
       }
-      const viewerRect = viewer.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      // The rail must use the code surface's viewport width. If it uses the
-      // whole viewer width, its own scroll range becomes zero and it looks
-      // like a decorative frame instead of a usable scrollbar.
-      rail.style.width = (target.clientWidth + 2) + "px";
-      const viewerContentLeft = viewerRect.left + parseFloat(getComputedStyle(viewer).paddingLeft || "0");
-      rail.style.marginLeft = Math.max(0, targetRect.left - viewerContentLeft) + "px";
-      rail.style.marginRight = "0";
-      railContent.style.width = target.scrollWidth + "px";
-      rail.classList.add("is-active");
+      // The rail belongs to the whole file-view area. The thumb represents
+      // the code surface's visible portion, even when the code itself has a
+      // narrower max-width than the viewer.
+      rail.style.marginRight = "";
+      const trackWidth = Math.max(0, track.clientWidth);
+      const viewportRatio = Math.min(1, target.clientWidth / target.scrollWidth);
+      const thumbWidth = Math.max(44, Math.round(trackWidth * viewportRatio));
+      const maxThumbLeft = Math.max(0, trackWidth - thumbWidth);
+      const scrollRatio = target.scrollWidth > target.clientWidth
+        ? target.scrollLeft / (target.scrollWidth - target.clientWidth)
+        : 0;
+      thumb.style.width = Math.min(trackWidth, thumbWidth) + "px";
+      thumb.style.transform = `translateX(${Math.round(maxThumbLeft * scrollRatio)}px)`;
+      rail.classList.add("has-target");
       rail.setAttribute("aria-hidden", "false");
-      syncing = true;
-      rail.scrollLeft = target.scrollLeft;
-      syncing = false;
     };
 
     function schedule() {
@@ -530,10 +571,42 @@
       frame = requestAnimationFrame(refresh);
     }
 
-    rail.addEventListener("scroll", () => {
-      if (!target || syncing) return;
-      target.scrollLeft = rail.scrollLeft;
-    }, { passive: true });
+    let railPointer = null;
+    rail.addEventListener("pointerdown", (event) => {
+      if (!target || event.button > 0) return;
+      const trackRect = track.getBoundingClientRect();
+      const thumbRect = thumb.getBoundingClientRect();
+      const clickedThumb = event.target === thumb || thumb.contains(event.target);
+      const thumbCenter = thumbRect.left + thumbRect.width / 2;
+      const page = target.scrollWidth - target.clientWidth;
+      const maxThumbLeft = Math.max(1, trackRect.width - thumbRect.width);
+      if (!clickedThumb) {
+        const nextLeft = Math.max(0, Math.min(maxThumbLeft, event.clientX - trackRect.left - thumbRect.width / 2));
+        target.scrollLeft = (nextLeft / maxThumbLeft) * page;
+        schedule();
+        return;
+      }
+      railPointer = { id: event.pointerId, startX: event.clientX, startThumbLeft: thumbCenter - trackRect.left - thumbRect.width / 2 };
+      rail.classList.add("is-dragging");
+      rail.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    });
+    rail.addEventListener("pointermove", (event) => {
+      if (!railPointer || event.pointerId !== railPointer.id || !target) return;
+      const trackRect = track.getBoundingClientRect();
+      const thumbWidth = thumb.getBoundingClientRect().width;
+      const maxThumbLeft = Math.max(1, trackRect.width - thumbWidth);
+      const nextLeft = Math.max(0, Math.min(maxThumbLeft, railPointer.startThumbLeft + event.clientX - railPointer.startX));
+      target.scrollLeft = (nextLeft / maxThumbLeft) * (target.scrollWidth - target.clientWidth);
+      event.preventDefault();
+    });
+    const clearRailPointer = () => {
+      railPointer = null;
+      rail.classList.remove("is-dragging");
+    };
+    rail.addEventListener("pointerup", clearRailPointer);
+    rail.addEventListener("pointercancel", clearRailPointer);
+    rail.addEventListener("lostpointercapture", clearRailPointer);
 
     // Let users drag the code surface itself on touch screens and with a
     // pointer. The vertical gesture remains native; once a gesture is clearly
@@ -580,7 +653,7 @@
     };
     body.addEventListener("pointerdown", (event) => {
       if (!target || event.button > 0) return;
-      const targetElement = event.target.closest?.(".source pre, .md-code");
+      const targetElement = event.target.closest?.(".code-scroll");
       if (targetElement !== target) return;
       pointer = {
         id: event.pointerId,
@@ -649,7 +722,7 @@
   let codeCopyFeedbackTimer = null;
 
   async function copyCodeBlock(button) {
-    const code = button.closest("pre")?.querySelector("code");
+    const code = button.closest(".code-block")?.querySelector("code");
     if (!code) return;
 
     let copied = false;
@@ -1022,11 +1095,68 @@
     }, { passive: false });
   }
 
+  // Keep file-view zoom independent from the optional scrollbar UI. This is
+  // available on desktop with Cmd/Ctrl + wheel and on mobile with pinch.
+  function setupViewerZoom() {
+    const body = document.getElementById("viewerBody");
+    if (!body) return;
+
+    let viewerScale = 1;
+    let previousPinchDistance = 0;
+
+    const setViewerScale = (scale) => {
+      viewerScale = Math.min(10, Math.max(0.002, scale));
+      body.style.setProperty("--viewer-zoom", String(viewerScale));
+      body.querySelectorAll(":scope > *").forEach((content) => {
+        content.style.zoom = String(viewerScale);
+      });
+    };
+
+    body.resetViewerZoom = () => setViewerScale(1);
+
+    const touchDistance = (touches) => Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+
+    body.addEventListener("wheel", (event) => {
+      if (!event.metaKey && !event.ctrlKey) return;
+      event.preventDefault();
+      const rawDelta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX;
+      if (!rawDelta) return;
+      const delta = event.deltaMode === 1 ? rawDelta * 16 : rawDelta;
+      setViewerScale(viewerScale * Math.exp(-delta * 0.004));
+    }, { passive: false, capture: true });
+
+    body.addEventListener("touchstart", (event) => {
+      if (!mobileViewport.matches || event.touches.length !== 2) return;
+      previousPinchDistance = touchDistance(event.touches);
+    }, { passive: true });
+
+    body.addEventListener("touchmove", (event) => {
+      if (!mobileViewport.matches || event.touches.length < 2 || previousPinchDistance <= 0) return;
+      event.preventDefault();
+      const distance = touchDistance(event.touches);
+      if (!distance) return;
+      const distanceRatio = distance / previousPinchDistance;
+      previousPinchDistance = distance;
+      setViewerScale(viewerScale * Math.pow(distanceRatio, 1.35));
+    }, { passive: false });
+
+    const endPinch = (event) => {
+      if (event.touches.length < 2) previousPinchDistance = 0;
+    };
+    body.addEventListener("touchend", endPinch, { passive: true });
+    body.addEventListener("touchcancel", endPinch, { passive: true });
+  }
+
   const treeEl = document.getElementById("tree");
   setupTreeSettings();
   setupSidebarResizer();
   setupProjectStripScroll();
-  setupViewerScrollbar();
+  setupViewerZoom();
   if (projectId !== null && projectId !== undefined && treeEl) {
     restoreTree(treeEl).catch((error) => {
       showTreeMessage(treeEl, error.message || "フォルダを読み込めませんでした。", "error");

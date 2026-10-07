@@ -567,6 +567,7 @@ body.resizing .sidebar-resizer {
   min-height: calc(100dvh - 56px);
   background: var(--canvas);
   padding: 16px;
+  position: relative;
 }
 
 .proj-head {
@@ -785,8 +786,9 @@ body.resizing .sidebar-resizer {
 }
 
 .vt-modes button {
-  min-height: 32px;
-  padding: 0 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   background: transparent;
   border: 1px solid transparent;
   color: var(--dim);
@@ -795,6 +797,13 @@ body.resizing .sidebar-resizer {
     monospace;
   cursor: pointer;
   border-radius: 3px;
+}
+
+.vt-modes button svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin: auto;
 }
 
 .vt-modes button:hover,
@@ -848,16 +857,33 @@ body.view-file.pdf-active .viewer-body {
   max-width: 860px;
 }
 
-.source pre,
-.md pre {
+.code-block {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.code-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  touch-action: pan-x pan-y;
+  cursor: grab;
+  scrollbar-width: thin;
+  scrollbar-color: #5b6470 transparent;
+}
+
+.code-scroll pre {
+  width: max-content;
+  min-width: 100%;
   margin: 0;
   background: transparent;
   border: 0;
   padding: 48px 16px 16px;
   border-radius: 0;
-  overflow: auto;
   color: #c0caf5;
+  white-space: pre;
   font:
     16px/1.8 "JetBrains Mono",
     monospace;
@@ -867,6 +893,8 @@ body.view-file.pdf-active .viewer-body {
   position: absolute;
   top: 8px;
   right: 8px;
+  right: 8px;
+  z-index: 2;
   min-height: 30px;
   padding: 4px 10px;
   border: 1px solid var(--accent);
@@ -2619,41 +2647,21 @@ body.view-file .viewer::-webkit-scrollbar {
 /* Code surfaces keep Tokyo Night colors while the horizontal control is
    promoted to the bottom edge of the viewer. The pre itself remains the
    scroll target so keyboard, touch, and the bottom rail stay synchronized. */
-.source pre,
-.md pre {
-  overflow-x: auto;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #5b6470 transparent;
-}
-
-.source pre::-webkit-scrollbar,
-.md pre::-webkit-scrollbar {
+.code-scroll::-webkit-scrollbar {
   width: 8px;
-  height: 0;
+  height: 8px;
 }
 
-/* The horizontal position is controlled by the viewer rail on desktop, but
-   keep the native scroll surface available for touch and pointer dragging. */
-.source pre,
-.md pre {
-  touch-action: pan-y;
-  cursor: grab;
-}
-
-.source pre.is-dragging,
-.md pre.is-dragging {
+.code-scroll.is-dragging {
   cursor: grabbing;
   user-select: none;
 }
 
-.source pre::-webkit-scrollbar-track,
-.md pre::-webkit-scrollbar-track {
+.code-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.source pre::-webkit-scrollbar-thumb,
-.md pre::-webkit-scrollbar-thumb {
+.code-scroll::-webkit-scrollbar-thumb {
   background: #5b6470;
   border: 2px solid transparent;
   border-radius: 999px;
@@ -2661,53 +2669,69 @@ body.view-file .viewer::-webkit-scrollbar {
 }
 
 .viewer-scrollbar {
-  position: sticky;
+  position: fixed;
   z-index: 4;
-  bottom: 10px;
+  right: auto;
+  bottom: 0;
+  left: 0;
   display: none;
-  width: fit-content;
-  height: 14px;
-  margin: 0 12px 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.22);
-  scrollbar-width: thin;
-  scrollbar-color: #697586 transparent;
+  width: 100%;
+  height: 52px;
+  margin: 0;
+  align-items: center;
+  padding: 0 10px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
 }
 
-.viewer-scrollbar.is-active {
+body.view-file .viewer-scrollbar {
+  display: flex;
+}
+
+.viewer-scrollbar-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(139, 149, 165, 0.24);
+  background: #171a1e;
+}
+
+.viewer-scrollbar-map {
+  position: absolute;
+  inset: 0;
   display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.82;
+  pointer-events: none;
 }
 
-.viewer-scrollbar > div {
-  width: 0;
-  height: 1px;
+.viewer-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20%;
+  min-width: 40px;
+  height: 100%;
+  border: 1px solid rgba(218, 224, 232, 0.7);
+  background: rgba(139, 149, 165, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(18, 21, 24, 0.35);
+  transition: background-color 140ms ease;
 }
 
-.viewer-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 10px;
+.viewer-scrollbar:not(.has-target) .viewer-scrollbar-thumb {
+  width: 100%;
+  transform: none !important;
+  border-color: rgba(218, 224, 232, 0.34);
+  background: rgba(139, 149, 165, 0.1);
 }
 
-.viewer-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.viewer-scrollbar::-webkit-scrollbar-thumb {
-  min-width: 44px;
-  background: #697586;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background-clip: padding-box;
-}
-
-.viewer-scrollbar:hover::-webkit-scrollbar-thumb,
-.viewer-scrollbar:focus-visible::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  background-clip: padding-box;
+.viewer-scrollbar:hover .viewer-scrollbar-thumb,
+.viewer-scrollbar:focus-visible .viewer-scrollbar-thumb,
+.viewer-scrollbar.is-dragging .viewer-scrollbar-thumb {
+  background: rgba(139, 149, 165, 0.28);
 }
 
 @media (max-width: 767px) {
@@ -2723,10 +2747,4 @@ body.view-file .viewer::-webkit-scrollbar {
     zoom: var(--viewer-zoom, 1);
   }
 
-  /* On a phone the whole code surface is the horizontal scroll affordance.
-     The narrow desktop rail is both redundant and difficult to operate. */
-  .viewer-scrollbar,
-  .viewer-scrollbar.is-active {
-    display: none;
-  }
 }

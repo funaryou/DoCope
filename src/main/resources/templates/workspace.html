@@ -143,15 +143,16 @@
         <div class="viewer-tabs">
             <span class="vt-file" data-copy-path role="button" tabindex="0" title="クリックで相対パスをコピー"><span class="dot"></span><span id="vtName">ファイルを選択してください</span><span class="copy-state" data-copy-state aria-live="polite"></span></span>
             <span class="vt-modes" id="vtModes" style="display:none">
-                <button class="on" data-mode="render" type="button">描画表示</button>
-                <button data-mode="code" type="button">コード表示</button>
+                <button class="on" data-mode="render" type="button" aria-label="描画表示" title="描画表示" aria-pressed="true">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                </button>
+                <button data-mode="code" type="button" aria-label="コード表示" title="コード表示" aria-pressed="false">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg>
+                </button>
             </span>
         </div>
         <div class="viewer-body" id="viewerBody">
             <div class="empty"><div class="em-icon" aria-hidden="true">/</div><h4>ファイルを選択してください</h4><p>左のツリーからファイルを選ぶと内容が表示されます。</p></div>
-        </div>
-        <div class="viewer-scrollbar" data-viewer-scrollbar aria-label="コードの横スクロール" aria-hidden="true">
-            <div></div>
         </div>
     </main>
 </div>
