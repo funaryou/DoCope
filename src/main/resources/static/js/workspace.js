@@ -779,6 +779,7 @@
     const body = document.getElementById("viewerBody");
     if (!body) return;
     body.resetViewerZoom?.();
+    document.body.classList.toggle("pdf-active", ext === PDF_EXT);
     setFileTone(body, ext);
     currentFile = { path: relPath, ext };
     workspaceState.file = relPath;
@@ -841,8 +842,8 @@
     }
 
     if (ext === PDF_EXT) {
-      body.innerHTML = '<div data-render><embed src="/file/' + projectId + "?path=" + encodeURIComponent(relPath)
-        + '" type="application/pdf" style="width:100%;height:600px"></div>';
+      body.innerHTML = '<div data-render class="pdf-view"><embed src="/file/' + projectId + "?path=" + encodeURIComponent(relPath)
+        + '" type="application/pdf" aria-label="' + escapeHtml(name) + '"></div>';
       setModes(["render"]);
       return;
     }

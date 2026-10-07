@@ -810,6 +810,36 @@ body.resizing .sidebar-resizer {
   margin: 0 auto;
 }
 
+/* A PDF is an interactive document surface, so it should use all of the
+   height left after the viewer tabs instead of the old fixed 600px height. */
+body.view-file.pdf-active .viewer-body {
+  height: calc(100% - 52px);
+  max-width: none;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.pdf-view {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.pdf-view embed {
+  display: block;
+  /* Chrome's built-in PDF viewer owns its scrollbars, so scrollbar-width
+     cannot style them from the host page. Extend the embed past the clipped
+     wrapper to keep both native rails outside the visible surface. */
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  max-width: none;
+  max-height: none;
+  border: 0;
+}
+
 .source,
 .md,
 .img-view,
@@ -2431,6 +2461,22 @@ body.view-file .activity {
   body.view-file .viewer {
     min-height: 0;
     overflow-y: auto;
+  }
+
+  /* The mobile grid already allocates the remaining viewport after the
+     tree/resizer. Give the PDF pane that exact row height so its 100% child
+     follows both the current tree size and the hidden-tree state. */
+  body.view-file.pdf-active .viewer {
+    /* Size the file-view section itself from the viewport. Percentage
+       heights are unreliable here because the grid item is also resized by
+       the tree splitter. */
+    height: calc(100dvh - 72px - var(--sidebar-mobile-height, 35dvh) - 14px);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.view-file.pdf-active .viewer-body {
+    height: calc(100dvh - 72px - var(--sidebar-mobile-height, 35dvh) - 14px - 32px - 52px);
   }
 
   /* There is no file-viewer pane to resize until a file is selected. */
